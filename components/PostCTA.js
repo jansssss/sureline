@@ -150,7 +150,7 @@ export default function PostCTA({ category }) {
         style={{
           fontFamily: "'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif",
           fontSize: "11px",
-          color: "#aab3c6",
+          color: "#5a6a85",
           margin: "16px 0 0",
           lineHeight: 1.6,
           paddingTop: "14px",
