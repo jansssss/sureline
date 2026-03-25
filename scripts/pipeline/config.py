@@ -40,7 +40,7 @@ def load_config() -> AppConfig:
         prompt_path=scripts_root / "prompts" / "pain_guide_writer.txt",
         guides_js_path=project_root / "lib" / "guides.js",
         openai_api_key=os.getenv("OPENAI_API_KEY") or None,
-        openai_model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        openai_model=os.getenv("OPENAI_MODEL", "gpt-5.4-mini"),
         perplexity_api_key=os.getenv("PERPLEXITY_API_KEY") or None,
         supabase_url=os.getenv("SUPABASE_URL") or None,
         supabase_service_role_key=os.getenv("SUPABASE_SERVICE_ROLE_KEY") or None,
