@@ -14,7 +14,9 @@ on:
         default: false
         type: boolean
   schedule:
-    - cron: "0 23 * * *"   # 매일 KST 08:00 시작 → sleep으로 최대 59분 지연 (08:00~09:00 랜덤)
+    - cron: "0 23 * * *"   # 1회차: KST 08:00 시작 (UTC 23:00 전날)
+    - cron: "0 7 * * *"    # 2회차: KST 16:00 시작 (UTC 07:00)
+    - cron: "0 15 * * *"   # 3회차: KST 00:00 시작 (UTC 15:00)
 
 jobs:
   publish:
@@ -23,11 +25,11 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      - name: Random delay (08:00~09:00 KST)
+      - name: Random delay (최대 30분, schedule 전용)
         if: github.event_name == 'schedule'
         shell: bash
         run: |
-          DELAY=$(( RANDOM % 60 ))
+          DELAY=$(( RANDOM % 30 ))
           echo "랜덤 지연: ${DELAY}분 대기"
           sleep "${DELAY}m"
 
@@ -46,15 +48,15 @@ jobs:
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          GUIDES_PER_RUN: ${{ inputs.count || secrets.GUIDES_PER_RUN || '1' }}
+          GUIDES_PER_RUN: ${{ inputs.count || '1' }}
         shell: bash
         run: |
-          printf 'OPENAI_API_KEY=%s\n'           "$OPENAI_API_KEY"           >> .env
-          printf 'OPENAI_MODEL=%s\n'             "$OPENAI_MODEL"             >> .env
-          printf 'PERPLEXITY_API_KEY=%s\n'       "$PERPLEXITY_API_KEY"       >> .env
-          printf 'SUPABASE_URL=%s\n'             "$SUPABASE_URL"             >> .env
-          printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n' "$SUPABASE_SERVICE_ROLE_KEY" >> .env
-          printf 'GUIDES_PER_RUN=%s\n'           "$GUIDES_PER_RUN"           >> .env
+          printf 'OPENAI_API_KEY=%s\n'             "$OPENAI_API_KEY"             >> .env
+          printf 'OPENAI_MODEL=%s\n'               "$OPENAI_MODEL"               >> .env
+          printf 'PERPLEXITY_API_KEY=%s\n'         "$PERPLEXITY_API_KEY"         >> .env
+          printf 'SUPABASE_URL=%s\n'               "$SUPABASE_URL"               >> .env
+          printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n'  "$SUPABASE_SERVICE_ROLE_KEY"  >> .env
+          printf 'GUIDES_PER_RUN=%s\n'             "$GUIDES_PER_RUN"             >> .env
 
       - name: Publish guide
         shell: bash
