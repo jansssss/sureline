@@ -238,6 +238,32 @@ export default async function GuideDetailPage({ params }) {
       {/* CTA */}
       <PostCTA category={guide.category} />
 
+      {/* 함께 보면 좋은 글 */}
+      {guide.relatedGuides && guide.relatedGuides.length > 0 && (
+        <div style={{ marginTop: "40px", padding: "28px 24px", background: "#f4f7ff", borderRadius: "16px" }}>
+          <div style={{ fontSize: "12px", fontWeight: 700, color: "#3268ff", letterSpacing: "0.08em", marginBottom: "16px" }}>
+            함께 보면 좋은 글
+          </div>
+          <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+            {guide.relatedGuides.map((r) => (
+              <li key={r.slug} style={{ borderBottom: "1px solid #dde6ff" }}>
+                <Link href={`/guides/${r.slug}`} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  gap: "12px", padding: "13px 0",
+                  fontSize: "15px", fontWeight: 600, color: "#1c2741",
+                  textDecoration: "none", wordBreak: "keep-all", lineHeight: 1.4,
+                }}>
+                  <span>{r.title}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3268ff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* 이전/다음 글 */}
       <div className="mt-16 border-y divide-y border-gray-200">
         {prev ? (

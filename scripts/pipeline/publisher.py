@@ -38,6 +38,24 @@ class SupabasePublisher:
         except Exception:
             return []
 
+    def fetch_published_guides(self, limit: int = 60) -> list[dict]:
+        url = f"{self.base_url}/rest/v1/guides?select=slug,category,title&order=created_at.desc&limit={limit}"
+        req = request.Request(url, headers=self._headers)
+        try:
+            with request.urlopen(req, timeout=10) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except Exception:
+            return []
+
+    def _find_related_slugs(self, guide: Guide, existing: list[dict], max_count: int = 3) -> list[str]:
+        """같은 카테고리 우선, 부족하면 다른 카테고리로 채움"""
+        same_cat = [g for g in existing if g["category"] == guide.category]
+        other = [g for g in existing if g["category"] != guide.category]
+        related = same_cat[:max_count]
+        if len(related) < max_count:
+            related += other[:max_count - len(related)]
+        return [g["slug"] for g in related[:max_count]]
+
     def _slug_is_unique(self, slug: str) -> bool:
         url = f"{self.base_url}/rest/v1/guides?slug=eq.{slug}&select=id&limit=1"
         req = request.Request(url, headers=self._headers)
@@ -56,6 +74,9 @@ class SupabasePublisher:
     def publish(self, guide: Guide) -> str:
         slug = self._unique_slug(guide.slug)
 
+        existing_guides = self.fetch_published_guides()
+        related_slugs = self._find_related_slugs(guide, existing_guides)
+
         guide_row = {
             "slug": slug,
             "category": guide.category,
@@ -65,6 +86,7 @@ class SupabasePublisher:
             "key_points": guide.key_points,
             "sources": guide.sources,
             "published_at": guide.published_at,
+            "related_slugs": related_slugs,
         }
         raw_body = json.dumps(guide_row).encode("utf-8")
         req = request.Request(
