@@ -14,7 +14,7 @@ on:
         default: false
         type: boolean
   schedule:
-    - cron: "0 22 * * *"   # 매일 KST 07:00 (UTC 22:00 전날)
+    - cron: "0 23 * * *"   # 매일 KST 08:00 시작 → sleep으로 최대 59분 지연 (08:00~09:00 랜덤)
 
 jobs:
   publish:
@@ -23,6 +23,14 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
+      - name: Random delay (08:00~09:00 KST)
+        if: github.event_name == 'schedule'
+        shell: bash
+        run: |
+          DELAY=$(( RANDOM % 60 ))
+          echo "랜덤 지연: ${DELAY}분 대기"
+          sleep "${DELAY}m"
+
       - name: Checkout
         uses: actions/checkout@v4
 
