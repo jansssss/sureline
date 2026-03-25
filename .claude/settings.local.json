@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run dev:*)",
+      "Bash(npm install:*)",
+      "Bash(npx next lint:*)",
+      "Bash(node -c:*)",
+      "Bash(git add:*)",
+      "Bash(git reset:*)",
+      "Bash(git checkout:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Read(//f/개인/tesla/tesla-quote-app/**)",
+      "Read(//f/개인/tesla/tesla-quote-app/scripts/**)"
+    ]
+  }
+}
