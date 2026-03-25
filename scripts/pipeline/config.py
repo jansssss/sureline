@@ -16,6 +16,10 @@ class AppConfig:
     supabase_url: str | None
     supabase_service_role_key: str | None
     guides_per_run: int
+    x_api_key: str | None
+    x_api_secret: str | None
+    x_access_token: str | None
+    x_access_token_secret: str | None
 
 
 def _load_dotenv(dotenv_path: Path) -> None:
@@ -45,4 +49,8 @@ def load_config() -> AppConfig:
         supabase_url=os.getenv("SUPABASE_URL") or None,
         supabase_service_role_key=os.getenv("SUPABASE_SERVICE_ROLE_KEY") or None,
         guides_per_run=int(os.getenv("GUIDES_PER_RUN", "1")),
+        x_api_key=os.getenv("X_API_KEY") or None,
+        x_api_secret=os.getenv("X_API_SECRET") or None,
+        x_access_token=os.getenv("X_ACCESS_TOKEN") or None,
+        x_access_token_secret=os.getenv("X_ACCESS_TOKEN_SECRET") or None,
     )

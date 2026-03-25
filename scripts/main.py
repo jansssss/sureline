@@ -24,6 +24,7 @@ from scripts.pipeline.config import load_config
 from scripts.pipeline.researcher import PerplexityResearcher
 from scripts.pipeline.writer import GuideWriter
 from scripts.pipeline.publisher import SupabasePublisher, FilePublisher
+from scripts.pipeline.x_publisher import XPublisher
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -36,6 +37,8 @@ def build_parser() -> argparse.ArgumentParser:
                    help="Supabase가 설정되어 있어도 파일(guides.js)에 발행")
     p.add_argument("--model", type=str, default=None,
                    help="OpenAI 모델 지정 (예: gpt-4o-mini, gpt-4o)")
+    p.add_argument("--no-x", action="store_true",
+                   help="X(Twitter) 자동 게시 건너뜀")
     return p
 
 
@@ -73,6 +76,26 @@ def main() -> None:
     else:
         publisher = FilePublisher(config.guides_js_path)
         pub_label = f"File ({config.guides_js_path.name})"
+
+    # ── X 퍼블리셔 초기화 ─────────────────────────
+    x_publisher = None
+    if (
+        not args.dry_run
+        and not args.no_x
+        and config.x_api_key
+        and config.x_api_secret
+        and config.x_access_token
+        and config.x_access_token_secret
+    ):
+        x_publisher = XPublisher(
+            config.x_api_key,
+            config.x_api_secret,
+            config.x_access_token,
+            config.x_access_token_secret,
+        )
+        print("[PIPELINE] X 자동 게시 활성화", flush=True)
+    else:
+        print("[PIPELINE] X 자동 게시 비활성화 (키 없음 또는 --no-x)", flush=True)
 
     # ── 파이프라인 초기화 ──────────────────────────
     researcher = PerplexityResearcher(config.perplexity_api_key)
@@ -135,6 +158,15 @@ def main() -> None:
         except Exception as exc:
             print(f"[STEP 3] 실패: {exc}", flush=True)
             sys.exit(1)
+
+        # STEP 4: X 스레드 게시
+        if x_publisher:
+            print("[STEP 4] X 스레드 게시 중...", flush=True)
+            try:
+                tweet_id = x_publisher.post_thread(guide, slug)
+                print(f"[STEP 4] X 게시 완료! tweet_id={tweet_id}", flush=True)
+            except Exception as exc:
+                print(f"[STEP 4] X 게시 실패 (발행은 완료): {exc}", flush=True)
 
     print(f"\n[PIPELINE] 전체 완료! {count}개 가이드 생성됨", flush=True)
 

@@ -49,6 +49,10 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GUIDES_PER_RUN: ${{ inputs.count || '1' }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
         shell: bash
         run: |
           printf 'OPENAI_API_KEY=%s\n'             "$OPENAI_API_KEY"             >> .env
@@ -57,6 +61,10 @@ jobs:
           printf 'SUPABASE_URL=%s\n'               "$SUPABASE_URL"               >> .env
           printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n'  "$SUPABASE_SERVICE_ROLE_KEY"  >> .env
           printf 'GUIDES_PER_RUN=%s\n'             "$GUIDES_PER_RUN"             >> .env
+          printf 'X_API_KEY=%s\n'                  "$X_API_KEY"                  >> .env
+          printf 'X_API_SECRET=%s\n'               "$X_API_SECRET"               >> .env
+          printf 'X_ACCESS_TOKEN=%s\n'             "$X_ACCESS_TOKEN"             >> .env
+          printf 'X_ACCESS_TOKEN_SECRET=%s\n'      "$X_ACCESS_TOKEN_SECRET"      >> .env
 
       - name: Publish guide
         shell: bash
