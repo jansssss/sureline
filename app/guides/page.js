@@ -37,10 +37,16 @@ export default async function GuidesPage({ searchParams }) {
       <div className="mx-auto max-w-3xl px-4 py-6">
         {paged.length > 0 ? (
           <div>
-            {paged.map((guide) => (
+            {paged.map((guide, idx) => (
               <article
                 key={guide.slug}
-                style={{ padding: "28px 0", borderBottom: "1px solid #eef2f7" }}
+                style={{
+                  padding: "28px 16px",
+                  borderBottom: "1px solid #eef2f7",
+                  background: idx % 2 === 0 ? "#f8f9fb" : "#fff",
+                  borderRadius: "8px",
+                  marginBottom: "4px",
+                }}
               >
                 {/* 카테고리 + 날짜 */}
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", flexWrap: "wrap" }}>
