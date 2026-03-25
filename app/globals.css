@@ -103,3 +103,11 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+.sureline-source-link {
+  color: #3268ff;
+  text-decoration: none;
+}
+.sureline-source-link:hover {
+  text-decoration: underline;
+}

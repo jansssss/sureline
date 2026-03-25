@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { fetchGuideBySlug, fetchAdjacentGuides, fetchAllGuides } from "@/lib/supabase-server";
+import { fetchGuideBySlug, fetchAdjacentGuides } from "@/lib/supabase-server";
 import PostCTA from "@/components/PostCTA";
 
 export const dynamic = "force-dynamic";
@@ -24,10 +24,7 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function GuideDetailPage({ params }) {
-  const [guide, allGuides] = await Promise.all([
-    fetchGuideBySlug(params.slug),
-    fetchAllGuides(200),
-  ]);
+  const guide = await fetchGuideBySlug(params.slug);
 
   if (!guide) notFound();
 
@@ -227,9 +224,7 @@ export default async function GuideDetailPage({ params }) {
             {guide.sources.map((s, i) => (
               <li key={i} style={{ fontSize: "13px", color: "#7a8699", lineHeight: 1.6 }}>
                 <a href={s.url} target="_blank" rel="noopener noreferrer"
-                  style={{ color: "#3268ff", textDecoration: "none" }}
-                  onMouseOver={e => e.target.style.textDecoration = "underline"}
-                  onMouseOut={e => e.target.style.textDecoration = "none"}
+                  className="sureline-source-link"
                 >
                   {s.name}
                 </a>
