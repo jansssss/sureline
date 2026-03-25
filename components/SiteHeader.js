@@ -9,9 +9,6 @@ export default function SiteHeader() {
           <span className="hidden sm:inline text-sm text-gray-500">직장인 건강 가이드</span>
         </Link>
         <nav className="flex items-center gap-5 text-sm text-gray-600">
-          <Link href="/guides" className="hover:text-gray-900 transition-colors">
-            전체 글
-          </Link>
           <Link href="/about" className="hover:text-gray-900 transition-colors">
             소개
           </Link>
