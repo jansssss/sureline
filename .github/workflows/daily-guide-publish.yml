@@ -72,7 +72,7 @@ jobs:
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             python -m scripts.main --dry-run --count "${{ inputs.count || '1' }}"
           elif [ -n "${{ inputs.count }}" ]; then
-            python -m scripts.main --count "${{ inputs.count }}"
+            python -m scripts.main --count "${{ inputs.count }}" --no-x
           else
-            python -m scripts.main
+            python -m scripts.main --no-x
           fi
