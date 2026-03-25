@@ -8,14 +8,19 @@ export const metadata = {
   description: "직장인 목·어깨·허리 통증, 눈 피로, 피로 회복 관련 모든 가이드 목록입니다.",
 };
 
+const PAGE_SIZE = 5;
+
 function formatDate(dateStr) {
   if (!dateStr) return "";
   const [year, month, day] = dateStr.slice(0, 10).split("-");
   return `${year}. ${parseInt(month)}. ${parseInt(day)}.`;
 }
 
-export default async function GuidesPage() {
+export default async function GuidesPage({ searchParams }) {
   const guides = await fetchAllGuides(200);
+  const totalPages = Math.ceil(guides.length / PAGE_SIZE);
+  const currentPage = Math.min(Math.max(Number(searchParams?.page) || 1, 1), totalPages || 1);
+  const paged = guides.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <main className="flex-1">
@@ -30,9 +35,9 @@ export default async function GuidesPage() {
 
       {/* 글 피드 */}
       <div className="mx-auto max-w-3xl px-4 py-6">
-        {guides.length > 0 ? (
+        {paged.length > 0 ? (
           <div>
-            {guides.map((guide) => (
+            {paged.map((guide) => (
               <article
                 key={guide.slug}
                 style={{ padding: "28px 0", borderBottom: "1px solid #eef2f7" }}
@@ -104,6 +109,52 @@ export default async function GuidesPage() {
           </div>
         ) : (
           <p className="text-center py-16 text-sm" style={{ color: "#9aa5b8" }}>아직 작성된 글이 없습니다.</p>
+        )}
+
+        {/* 페이지네이션 — 6개 이상일 때만 노출 */}
+        {totalPages > 1 && (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "4px", marginTop: "40px" }}>
+            {/* 이전 */}
+            {currentPage > 1 && (
+              <Link href={`/guides?page=${currentPage - 1}`} style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                width: "36px", height: "36px", borderRadius: "8px",
+                border: "1px solid #dde6ff", color: "#3268ff", textDecoration: "none", fontSize: "14px",
+              }}>
+                ‹
+              </Link>
+            )}
+
+            {/* 페이지 번호 */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <Link
+                key={p}
+                href={`/guides?page=${p}`}
+                style={{
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  width: "36px", height: "36px", borderRadius: "8px",
+                  fontSize: "14px", fontWeight: p === currentPage ? 700 : 400,
+                  textDecoration: "none",
+                  background: p === currentPage ? "#3268ff" : "#fff",
+                  color: p === currentPage ? "#fff" : "#5a6a85",
+                  border: p === currentPage ? "1px solid #3268ff" : "1px solid #dde6ff",
+                }}
+              >
+                {p}
+              </Link>
+            ))}
+
+            {/* 다음 */}
+            {currentPage < totalPages && (
+              <Link href={`/guides?page=${currentPage + 1}`} style={{
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                width: "36px", height: "36px", borderRadius: "8px",
+                border: "1px solid #dde6ff", color: "#3268ff", textDecoration: "none", fontSize: "14px",
+              }}>
+                ›
+              </Link>
+            )}
+          </div>
         )}
       </div>
 
