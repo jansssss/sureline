@@ -1,7 +1,7 @@
 import { fetchAllGuides } from "@/lib/supabase-server";
 import PostCard from "@/components/PostCard";
 
-export const revalidate = 600;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "전체 글 — sureline",
