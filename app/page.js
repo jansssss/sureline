@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { fetchAllGuides } from "@/lib/supabase-server";
+import { fetchAllGuidesWithSections } from "@/lib/supabase-server";
 import PostCTA from "@/components/PostCTA";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ function formatDate(dateStr) {
 }
 
 export default async function HomePage() {
-  const guides = await fetchAllGuides(10);
+  const guides = await fetchAllGuidesWithSections(10);
   const featured = guides.slice(0, 3);
   const rest = guides.slice(3);
 
@@ -21,9 +21,6 @@ export default async function HomePage() {
       {/* 히어로 */}
       <div style={{ borderTop: "4px solid #3268ff", background: "#f4f7ff", padding: "32px 0 24px" }}>
         <div className="mx-auto max-w-3xl px-4">
-          <p style={{ fontSize: "12px", fontWeight: 700, color: "#3268ff", letterSpacing: "0.1em", marginBottom: "8px" }}>
-            SURELINE
-          </p>
           <h1 style={{ fontSize: "clamp(1.375rem, 4vw, 1.75rem)", fontWeight: 800, color: "#1c2741", marginBottom: "8px", lineHeight: 1.3, wordBreak: "keep-all" }}>
             직장인 통증·피로, 원인부터 해결까지
           </h1>
