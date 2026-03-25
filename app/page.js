@@ -2,7 +2,7 @@ import Link from "next/link";
 import { fetchAllGuides } from "@/lib/supabase-server";
 import PostCard from "@/components/PostCard";
 
-export const revalidate = 3600;
+export const revalidate = 600;
 
 export default async function HomePage() {
   const guides = await fetchAllGuides(9);
