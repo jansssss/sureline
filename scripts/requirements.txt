@@ -1,3 +1,8 @@
 # sureline 파이프라인 의존성
-# 표준 라이브러리만 사용 (별도 설치 불필요)
 # Python 3.9+
+
+# GSC (Google Search Console) 데이터 수집용
+google-api-python-client>=2.100.0
+google-auth>=2.23.0
+google-auth-httplib2>=0.1.1
+google-auth-oauthlib>=1.1.0

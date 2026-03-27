@@ -20,6 +20,9 @@ class AppConfig:
     x_api_secret: str | None
     x_access_token: str | None
     x_access_token_secret: str | None
+    gsc_client_secret_path: str | None
+    gsc_token_path: str | None
+    gsc_site_url: str | None
 
 
 def _load_dotenv(dotenv_path: Path) -> None:
@@ -53,4 +56,7 @@ def load_config() -> AppConfig:
         x_api_secret=os.getenv("X_API_SECRET") or None,
         x_access_token=os.getenv("X_ACCESS_TOKEN") or None,
         x_access_token_secret=os.getenv("X_ACCESS_TOKEN_SECRET") or None,
+        gsc_client_secret_path=os.getenv("GSC_CLIENT_SECRET_PATH") or str(scripts_root / "credentials" / "client_secret.json"),
+        gsc_token_path=os.getenv("GSC_TOKEN_PATH") or str(scripts_root / "credentials" / "token.json"),
+        gsc_site_url=os.getenv("GSC_SITE_URL") or None,
     )
