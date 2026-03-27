@@ -55,10 +55,10 @@ class Guide:
 class GuideWriter:
     OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
 
-    def __init__(self, api_key: str, model: str, prompt_path: Path) -> None:
+    def __init__(self, api_key: str, model: str, prompt_path: Path, prompt_content: str | None = None) -> None:
         self.api_key = api_key
         self.model = model
-        self.prompt_text = prompt_path.read_text(encoding="utf-8")
+        self.prompt_text = prompt_content if prompt_content else prompt_path.read_text(encoding="utf-8")
 
     def write(self, research: dict) -> Guide:
         """Perplexity 리서치 결과를 받아 Guide 반환"""

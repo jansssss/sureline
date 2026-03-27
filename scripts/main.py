@@ -77,12 +77,15 @@ def main() -> None:
         publisher = FilePublisher(config.guides_js_path)
         pub_label = f"File ({config.guides_js_path.name})"
 
-    # ── 현재 프롬프트 버전 조회 ────────────────────
+    # ── 현재 프롬프트 버전 조회 (Supabase 우선, 없으면 로컬 파일 fallback) ──
     current_version_id: int | None = None
+    prompt_content: str | None = None
     if use_supabase and publisher is not None:
-        current_version_id = publisher.fetch_current_prompt_version_id()
-        if current_version_id is not None:
-            print(f"[PIPELINE] 현재 프롬프트 버전 id={current_version_id}", flush=True)
+        current_version_id, prompt_content = publisher.fetch_latest_prompt()
+        if prompt_content:
+            print(f"[PIPELINE] Supabase 프롬프트 v{current_version_id} 사용", flush=True)
+        else:
+            print("[PIPELINE] Supabase에 프롬프트 없음 — 로컬 파일 사용", flush=True)
 
     # ── X 퍼블리셔 초기화 ─────────────────────────
     x_publisher = None
@@ -110,6 +113,7 @@ def main() -> None:
         api_key=config.openai_api_key,
         model=model,
         prompt_path=config.prompt_path,
+        prompt_content=prompt_content,
     )
 
     print(f"[PIPELINE] 모델: {model} | 생성 수: {count}개 | 발행: {pub_label}", flush=True)

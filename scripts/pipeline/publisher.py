@@ -71,19 +71,21 @@ class SupabasePublisher:
             suffix += 1
         return slug
 
-    def fetch_current_prompt_version_id(self) -> int | None:
-        """prompt_versions 테이블에서 최신 버전 id 조회. 없으면 None."""
+    def fetch_latest_prompt(self) -> tuple[int, str] | tuple[None, None]:
+        """prompt_versions 테이블에서 최신 버전 (id, content) 반환. 없으면 (None, None)."""
         url = (
             f"{self.base_url}/rest/v1/prompt_versions"
-            "?select=id&order=version.desc&limit=1"
+            "?select=id,version,content&order=version.desc&limit=1"
         )
         req = request.Request(url, headers=self._headers)
         try:
             with request.urlopen(req, timeout=10) as resp:
                 rows = json.loads(resp.read().decode("utf-8"))
-                return rows[0]["id"] if rows else None
+                if rows:
+                    return rows[0]["id"], rows[0]["content"]
+                return None, None
         except Exception:
-            return None
+            return None, None
 
     def publish(self, guide: Guide, prompt_version_id: int | None = None) -> str:
         slug = self._unique_slug(guide.slug)
