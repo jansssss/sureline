@@ -51,6 +51,8 @@ jobs:
           mkdir -p scripts/credentials
           printf '%s' "$GSC_CLIENT_SECRET_JSON" > scripts/credentials/client_secret.json
           printf '%s' "$GSC_TOKEN_JSON"         > scripts/credentials/token.json
+          echo "[DEBUG] token.json size: $(wc -c < scripts/credentials/token.json) bytes"
+          python -c "import json,sys; d=json.load(open('scripts/credentials/token.json')); print('[DEBUG] token client_id:', d.get('client_id','?')); print('[DEBUG] has refresh_token:', bool(d.get('refresh_token')))"
 
       - name: Run agent evolution
         env:

@@ -53,6 +53,8 @@ class GSCCollector:
         }
 
         credentials = self._get_credentials(client_secret_path, token_path)
+        print(f"[GSC] 인증 계정: {getattr(credentials, 'client_id', 'unknown')}", flush=True)
+        print(f"[GSC] site_url: {site_url!r}", flush=True)
         self._service = discovery.build(
             "searchconsole", "v1", credentials=credentials, cache_discovery=False
         )
