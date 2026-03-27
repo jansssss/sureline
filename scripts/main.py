@@ -77,6 +77,13 @@ def main() -> None:
         publisher = FilePublisher(config.guides_js_path)
         pub_label = f"File ({config.guides_js_path.name})"
 
+    # ── 현재 프롬프트 버전 조회 ────────────────────
+    current_version_id: int | None = None
+    if use_supabase and publisher is not None:
+        current_version_id = publisher.fetch_current_prompt_version_id()
+        if current_version_id is not None:
+            print(f"[PIPELINE] 현재 프롬프트 버전 id={current_version_id}", flush=True)
+
     # ── X 퍼블리셔 초기화 ─────────────────────────
     x_publisher = None
     if (
@@ -152,7 +159,7 @@ def main() -> None:
         # STEP 3: 발행
         print(f"[STEP 3] {pub_label}에 발행 중...", flush=True)
         try:
-            slug = publisher.publish(guide)
+            slug = publisher.publish(guide, prompt_version_id=current_version_id)
             print(f"[STEP 3] 발행 완료! slug={slug}", flush=True)
             published_titles.append(guide.title)
         except Exception as exc:

@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * PostCTA — 글 하단 쿠팡 파트너스 제품 CTA
  * Blogger render_html.py의 _pick_products + _build_cta_section 패턴을 Next.js에 적용.
@@ -16,7 +18,23 @@ function pickProducts(category) {
   return top.length > 0 ? top : SHOP_PRODUCTS.slice(0, 2);
 }
 
-export default function PostCTA({ category }) {
+/** CTA 버튼 클릭 → /api/cta-click fire-and-forget */
+function trackCtaClick(slug, productId) {
+  if (!slug) return;
+  try {
+    fetch("/api/cta-click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, productId }),
+    }).catch(() => {
+      // 실패해도 UX에 영향 없음
+    });
+  } catch {
+    // 동기 예외도 무시
+  }
+}
+
+export default function PostCTA({ category, slug }) {
   const products = pickProducts(category);
 
   return (
@@ -125,6 +143,7 @@ export default function PostCTA({ category }) {
               href={p.affiliate}
               target="_blank"
               rel="noopener noreferrer sponsored"
+              onClick={() => trackCtaClick(slug, p.id)}
               style={{
                 display: "block",
                 textAlign: "center",

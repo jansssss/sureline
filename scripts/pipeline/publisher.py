@@ -71,7 +71,21 @@ class SupabasePublisher:
             suffix += 1
         return slug
 
-    def publish(self, guide: Guide) -> str:
+    def fetch_current_prompt_version_id(self) -> int | None:
+        """prompt_versions 테이블에서 최신 버전 id 조회. 없으면 None."""
+        url = (
+            f"{self.base_url}/rest/v1/prompt_versions"
+            "?select=id&order=version.desc&limit=1"
+        )
+        req = request.Request(url, headers=self._headers)
+        try:
+            with request.urlopen(req, timeout=10) as resp:
+                rows = json.loads(resp.read().decode("utf-8"))
+                return rows[0]["id"] if rows else None
+        except Exception:
+            return None
+
+    def publish(self, guide: Guide, prompt_version_id: int | None = None) -> str:
         slug = self._unique_slug(guide.slug)
 
         existing_guides = self.fetch_published_guides()
@@ -87,6 +101,7 @@ class SupabasePublisher:
             "sources": guide.sources,
             "published_at": guide.published_at,
             "related_slugs": related_slugs,
+            "prompt_version_id": prompt_version_id,
         }
         raw_body = json.dumps(guide_row).encode("utf-8")
         req = request.Request(

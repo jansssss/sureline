@@ -236,7 +236,7 @@ export default async function GuideDetailPage({ params }) {
       )}
 
       {/* CTA */}
-      <PostCTA category={guide.category} />
+      <PostCTA category={guide.category} slug={guide.slug} />
 
       {/* 함께 보면 좋은 글 */}
       {guide.relatedGuides && guide.relatedGuides.length > 0 && (
