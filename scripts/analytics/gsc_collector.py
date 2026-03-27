@@ -53,11 +53,18 @@ class GSCCollector:
         }
 
         credentials = self._get_credentials(client_secret_path, token_path)
-        print(f"[GSC] 인증 계정: {getattr(credentials, 'client_id', 'unknown')}", flush=True)
-        print(f"[GSC] site_url: {site_url!r}", flush=True)
         self._service = discovery.build(
             "searchconsole", "v1", credentials=credentials, cache_discovery=False
         )
+        # 접근 가능한 사이트 목록 출력 (디버그용)
+        try:
+            sites = self._service.sites().list().execute()
+            entries = sites.get("siteEntry", [])
+            print(f"[GSC][DEBUG] 접근 가능한 사이트 {len(entries)}개:", flush=True)
+            for e in entries:
+                print(f"  - {e.get('siteUrl')} ({e.get('permissionLevel')})", flush=True)
+        except Exception as e:
+            print(f"[GSC][DEBUG] 사이트 목록 조회 실패: {e}", flush=True)
 
     def _get_credentials(self, client_secret_path: str, token_path: str) -> Credentials:
         """토큰 파일에서 credentials 로드, 없으면 OAuth2 브라우저 인증 실행."""
