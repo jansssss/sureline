@@ -37,7 +37,7 @@ class TavilyResearcher:
         payload = {
             "api_key": self.tavily_api_key,
             "query": query,
-            "search_depth": "advanced",
+            "search_depth": "basic",
             "include_answer": True,
             "max_results": 5,
         }
