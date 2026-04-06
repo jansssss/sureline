@@ -45,7 +45,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GUIDES_PER_RUN: ${{ inputs.count || '1' }}
@@ -57,7 +57,7 @@ jobs:
         run: |
           printf 'OPENAI_API_KEY=%s\n'             "$OPENAI_API_KEY"             >> .env
           printf 'OPENAI_MODEL=%s\n'               "$OPENAI_MODEL"               >> .env
-          printf 'PERPLEXITY_API_KEY=%s\n'         "$PERPLEXITY_API_KEY"         >> .env
+          printf 'TAVILY_API_KEY=%s\n'               "$TAVILY_API_KEY"             >> .env
           printf 'SUPABASE_URL=%s\n'               "$SUPABASE_URL"               >> .env
           printf 'SUPABASE_SERVICE_ROLE_KEY=%s\n'  "$SUPABASE_SERVICE_ROLE_KEY"  >> .env
           printf 'GUIDES_PER_RUN=%s\n'             "$GUIDES_PER_RUN"             >> .env

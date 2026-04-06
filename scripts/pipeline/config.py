@@ -12,7 +12,7 @@ class AppConfig:
     guides_js_path: Path
     openai_api_key: str | None
     openai_model: str
-    perplexity_api_key: str | None
+    tavily_api_key: str | None
     supabase_url: str | None
     supabase_service_role_key: str | None
     guides_per_run: int
@@ -48,7 +48,7 @@ def load_config() -> AppConfig:
         guides_js_path=project_root / "lib" / "guides.js",
         openai_api_key=os.getenv("OPENAI_API_KEY") or None,
         openai_model=os.getenv("OPENAI_MODEL", "gpt-5.4-mini"),
-        perplexity_api_key=os.getenv("PERPLEXITY_API_KEY") or None,
+        tavily_api_key=os.getenv("TAVILY_API_KEY") or None,
         supabase_url=os.getenv("SUPABASE_URL") or None,
         supabase_service_role_key=os.getenv("SUPABASE_SERVICE_ROLE_KEY") or None,
         guides_per_run=int(os.getenv("GUIDES_PER_RUN", "1")),
