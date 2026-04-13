@@ -1,6 +1,7 @@
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import Footer from "@/components/Footer";
+import { AdminProvider } from "@/components/AdminProvider";
 
 export const metadata = {
   title: "sureline — 직장인 건강 가이드",
@@ -11,9 +12,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ko">
       <body className="flex flex-col min-h-screen">
-        <SiteHeader />
-        {children}
-        <Footer />
+        <AdminProvider>
+          <SiteHeader />
+          {children}
+          <Footer />
+        </AdminProvider>
       </body>
     </html>
   );

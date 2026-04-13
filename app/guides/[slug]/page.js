@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchGuideBySlug, fetchAdjacentGuides } from "@/lib/supabase-server";
 import PostCTA from "@/components/PostCTA";
+import AdminEditButton from "@/components/AdminEditButton";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -304,6 +305,9 @@ export default async function GuideDetailPage({ params }) {
           </div>
         )}
       </div>
+
+      {/* 관리자 수정 버튼 */}
+      <AdminEditButton slug={params.slug} />
 
       {/* 목록으로 */}
       <div className="text-center mt-8">
