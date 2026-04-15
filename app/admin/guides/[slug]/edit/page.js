@@ -7,7 +7,10 @@ import { useRouter } from 'next/navigation';
 function sectionsToHtml(sections) {
   return (sections || []).map((s) => {
     let html = `<h2>${escapeHtml(s.title || '')}</h2>\n`;
-    for (const p of s.paragraphs || []) html += `<p>${escapeHtml(p)}</p>\n`;
+    for (const p of s.paragraphs || []) {
+      if (typeof p === 'string' && p.startsWith('<img')) html += `<p>${p}</p>\n`;
+      else html += `<p>${escapeHtml(p)}</p>\n`;
+    }
     if (s.bullets && s.bullets.length) {
       html += `<ul>\n${s.bullets.map((b) => `  <li>${escapeHtml(b)}</li>`).join('\n')}\n</ul>\n`;
     }
@@ -50,8 +53,21 @@ function htmlToSections(html) {
       current = { title: el.textContent.trim(), paragraphs: [], bullets: null, callout: null, table: null };
     } else if (tag === 'P') {
       ensureCurrent();
-      const text = el.textContent.trim();
-      if (text) current.paragraphs.push(text);
+      const img = el.querySelector('img');
+      if (img && img.src) {
+        const alt = (img.getAttribute('alt') || '').replace(/"/g, '&quot;');
+        current.paragraphs.push(`<img src="${img.src}" alt="${alt}">`);
+      } else {
+        const text = el.textContent.trim();
+        if (text) current.paragraphs.push(text);
+      }
+    } else if (tag === 'FIGURE' || tag === 'IMG') {
+      ensureCurrent();
+      const img = tag === 'IMG' ? el : el.querySelector('img');
+      if (img && img.src) {
+        const alt = (img.getAttribute('alt') || '').replace(/"/g, '&quot;');
+        current.paragraphs.push(`<img src="${img.src}" alt="${alt}">`);
+      }
     } else if (tag === 'UL' || tag === 'OL') {
       ensureCurrent();
       current.bullets = Array.from(el.querySelectorAll('li')).map((li) => li.textContent.trim()).filter(Boolean);
@@ -89,7 +105,13 @@ export default function EditPage({ params }) {
   const [mode, setMode] = useState('visual'); // 'visual' | 'html'
   const [htmlContent, setHtmlContent] = useState('');
   const [saveMsg, setSaveMsg] = useState('');
+  const [unsplashOpen, setUnsplashOpen] = useState(false);
+  const [unsplashQuery, setUnsplashQuery] = useState('');
+  const [unsplashResults, setUnsplashResults] = useState([]);
+  const [unsplashLoading, setUnsplashLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const editorRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // 미인증 시 홈으로
   useEffect(() => {
@@ -197,6 +219,57 @@ export default function EditPage({ params }) {
   };
   const clearFormat = () => exec('removeFormat');
 
+  const insertImage = (url, alt = '') => {
+    const safeAlt = (alt || '').replace(/"/g, '&quot;');
+    exec('insertHTML', `<p><img src="${url}" alt="${safeAlt}" style="max-width:100%;height:auto;border-radius:12px;"></p><p><br></p>`);
+    if (editorRef.current) setHtmlContent(editorRef.current.innerHTML);
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const token = localStorage.getItem('admin_token');
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) insertImage(data.url, file.name);
+      else setSaveMsg(`업로드 실패: ${data.error || res.status}`);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const searchUnsplash = async () => {
+    if (!unsplashQuery.trim()) return;
+    setUnsplashLoading(true);
+    try {
+      const token = localStorage.getItem('admin_token');
+      const res = await fetch(`/api/admin/unsplash?q=${encodeURIComponent(unsplashQuery)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setUnsplashResults(data.results || []);
+      else setSaveMsg(`Unsplash 실패: ${data.error || res.status}`);
+    } finally {
+      setUnsplashLoading(false);
+    }
+  };
+
+  const pickUnsplash = (photo) => {
+    insertImage(photo.full, photo.alt);
+    setUnsplashOpen(false);
+    setUnsplashResults([]);
+    setUnsplashQuery('');
+  };
+
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: '#5a6a85' }}>
       불러오는 중…
@@ -211,6 +284,73 @@ export default function EditPage({ params }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f8f9fb', overflow: 'hidden' }}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleFileUpload}
+      />
+
+      {unsplashOpen && (
+        <div
+          onClick={() => setUnsplashOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)',
+            zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff', borderRadius: 16, width: '100%', maxWidth: 880,
+              maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            }}
+          >
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e1e5eb', display: 'flex', gap: 8, alignItems: 'center' }}>
+              <strong style={{ fontSize: 15, color: '#1c2741', flex: 1 }}>📷 Unsplash 이미지 검색</strong>
+              <button onClick={() => setUnsplashOpen(false)} style={rmBtnSt}>✕</button>
+            </div>
+            <div style={{ padding: '14px 20px', display: 'flex', gap: 8, borderBottom: '1px solid #f0f2f7' }}>
+              <input
+                style={{ ...inputSt, marginBottom: 0, flex: 1 }}
+                value={unsplashQuery}
+                onChange={(e) => setUnsplashQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') searchUnsplash(); }}
+                placeholder="예: wrist pain, office ergonomic, healthy food…"
+                autoFocus
+              />
+              <button onClick={searchUnsplash} disabled={unsplashLoading} style={primaryBtnSt}>
+                {unsplashLoading ? '검색 중…' : '검색'}
+              </button>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+              {unsplashResults.length === 0 ? (
+                <div style={{ textAlign: 'center', color: '#9aa5b8', fontSize: 13, padding: '40px 0' }}>
+                  검색어를 입력하세요. 결과는 Unsplash에서 가져옵니다.
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10 }}>
+                  {unsplashResults.map((p) => (
+                    <div key={p.id} style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid #e1e5eb', background: '#f8f9fb' }}>
+                      <img
+                        src={p.thumb}
+                        alt={p.alt}
+                        onClick={() => pickUnsplash(p)}
+                        style={{ width: '100%', height: 130, objectFit: 'cover', cursor: 'pointer', display: 'block' }}
+                      />
+                      <div style={{ padding: '6px 8px', fontSize: 11, color: '#7a8699' }}>
+                        📸 <a href={p.authorUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#3268ff' }}>{p.author}</a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* ── 최상단 툴바 ── */}
       <div style={{
@@ -322,6 +462,10 @@ export default function EditPage({ params }) {
               <Sep />
               <ToolBtn onClick={insertLink} title="링크">🔗 링크</ToolBtn>
               <ToolBtn onClick={insertCallout} title="인사이트 박스">💡 인사이트</ToolBtn>
+              <ToolBtn onClick={() => fileInputRef.current?.click()} title="이미지 업로드">
+                {uploading ? '⏳' : '🖼️'} 이미지
+              </ToolBtn>
+              <ToolBtn onClick={() => setUnsplashOpen(true)} title="Unsplash에서 검색">📷 Unsplash</ToolBtn>
               <Sep />
               <ToolBtn onClick={() => exec('undo')} title="실행 취소">↶</ToolBtn>
               <ToolBtn onClick={() => exec('redo')} title="다시 실행">↷</ToolBtn>

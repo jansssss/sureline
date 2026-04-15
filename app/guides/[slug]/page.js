@@ -145,7 +145,9 @@ export default async function GuideDetailPage({ params }) {
             <h2>{section.title}</h2>
 
             {section.paragraphs.map((p, i) => (
-              <p key={i}>{p}</p>
+              typeof p === 'string' && p.startsWith('<img')
+                ? <p key={i} dangerouslySetInnerHTML={{ __html: p.replace(/<img([^>]*?)>/, '<img$1 style="max-width:100%;height:auto;border-radius:12px;margin:16px 0;" />') }} />
+                : <p key={i}>{p}</p>
             ))}
 
             {section.bullets && (
