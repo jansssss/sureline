@@ -7,15 +7,40 @@
  */
 import { SHOP_PRODUCTS, COUPANG_PARTNERS_NOTICE } from "@/data/shop-products";
 
-/** 카테고리 키워드와 가장 많이 겹치는 상품 최대 2개 반환. 매칭 0이면 rank 1·2 기본. */
-function pickProducts(category) {
-  const scored = SHOP_PRODUCTS.map((p) => {
-    const score = p.keywords.filter((k) => k === category || k.includes(category)).length;
-    return { product: p, score };
-  });
-  scored.sort((a, b) => b.score - a.score || a.product.rank - b.product.rank);
-  const top = scored.slice(0, 2).filter((x) => x.score > 0).map((x) => x.product);
-  return top.length > 0 ? top : SHOP_PRODUCTS.slice(0, 2);
+/** 슬러그 기반 deterministic 정수 해시 — 같은 글은 항상 같은 순서 */
+function hashString(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/**
+ * 카테고리 키워드와 겹치는 상품 중 최대 2개 선택.
+ * 같은 점수는 슬러그 기반 셔플로 공평하게 로테이션 → 글마다 다른 조합이 안정적으로 노출.
+ * 매칭 0이면 rank 1·2 기본.
+ */
+function pickProducts(category, slug) {
+  const matched = SHOP_PRODUCTS
+    .map((p) => ({
+      product: p,
+      score: p.keywords.filter((k) => k === category || k.includes(category)).length,
+    }))
+    .filter((x) => x.score > 0);
+
+  if (matched.length === 0) return SHOP_PRODUCTS.slice(0, 2);
+
+  // 슬러그 기반 시드로 deterministic shuffle (같은 글은 항상 같은 2개)
+  const seed = hashString(slug || "default");
+  const withKey = matched.map((x, i) => ({
+    ...x,
+    // 점수가 높을수록 우선, 같은 점수 내에서는 슬러그 해시 기반 정렬
+    sortKey: -x.score * 1e9 + ((seed + i * 2654435761) >>> 0),
+  }));
+  withKey.sort((a, b) => a.sortKey - b.sortKey);
+  return withKey.slice(0, 2).map((x) => x.product);
 }
 
 /** CTA 버튼 클릭 → /api/cta-click fire-and-forget */
@@ -35,7 +60,7 @@ function trackCtaClick(slug, productId) {
 }
 
 export default function PostCTA({ category, slug }) {
-  const products = pickProducts(category);
+  const products = pickProducts(category, slug);
 
   return (
     <aside
