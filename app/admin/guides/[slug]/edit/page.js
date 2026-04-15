@@ -1,25 +1,31 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAdmin } from '@/components/AdminProvider';
 
 // ─── sections ↔ HTML 변환 ────────────────────────────────────────────────────
 
 function sectionsToHtml(sections) {
   return (sections || []).map((s) => {
-    let html = `<h2>${s.title || ''}</h2>\n`;
-    for (const p of s.paragraphs || []) html += `<p>${p}</p>\n`;
+    let html = `<h2>${escapeHtml(s.title || '')}</h2>\n`;
+    for (const p of s.paragraphs || []) html += `<p>${escapeHtml(p)}</p>\n`;
     if (s.bullets && s.bullets.length) {
-      html += `<ul>\n${s.bullets.map((b) => `  <li>${b}</li>`).join('\n')}\n</ul>\n`;
+      html += `<ul>\n${s.bullets.map((b) => `  <li>${escapeHtml(b)}</li>`).join('\n')}\n</ul>\n`;
     }
     if (s.table) {
       const { headers = [], rows = [] } = s.table;
-      html += `<table>\n  <thead><tr>${headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead>\n`;
-      html += `  <tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody>\n</table>\n`;
+      html += `<table>\n  <thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>\n`;
+      html += `  <tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}</tbody>\n</table>\n`;
     }
-    if (s.callout) html += `<div class="callout">${s.callout}</div>\n`;
+    if (s.callout) html += `<div class="callout">${escapeHtml(s.callout)}</div>\n`;
     return html;
   }).join('\n');
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function htmlToSections(html) {
@@ -29,31 +35,41 @@ function htmlToSections(html) {
   const sections = [];
   let current = null;
 
+  function flush() {
+    if (current) sections.push(current);
+    current = null;
+  }
+  function ensureCurrent() {
+    if (!current) current = { title: '', paragraphs: [], bullets: null, callout: null, table: null };
+  }
+
   for (const el of doc.body.children) {
     const tag = el.tagName;
     if (tag === 'H2') {
-      if (current) sections.push(current);
+      flush();
       current = { title: el.textContent.trim(), paragraphs: [], bullets: null, callout: null, table: null };
-    } else if (tag === 'P' && current) {
+    } else if (tag === 'P') {
+      ensureCurrent();
       const text = el.textContent.trim();
       if (text) current.paragraphs.push(text);
-    } else if ((tag === 'UL' || tag === 'OL') && current) {
+    } else if (tag === 'UL' || tag === 'OL') {
+      ensureCurrent();
       current.bullets = Array.from(el.querySelectorAll('li')).map((li) => li.textContent.trim()).filter(Boolean);
-    } else if (tag === 'TABLE' && current) {
+    } else if (tag === 'TABLE') {
+      ensureCurrent();
       const headers = Array.from(el.querySelectorAll('thead th')).map((th) => th.textContent.trim());
       const rows = Array.from(el.querySelectorAll('tbody tr')).map((tr) =>
         Array.from(tr.querySelectorAll('td')).map((td) => td.textContent.trim())
       );
       current.table = { headers, rows };
-    } else if (tag === 'DIV' && el.className.includes('callout') && current) {
+    } else if (tag === 'DIV' && el.className.includes('callout')) {
+      ensureCurrent();
       current.callout = el.textContent.trim();
     }
   }
-  if (current) sections.push(current);
+  flush();
   return sections;
 }
-
-// ─── 실제 발행 페이지와 동일한 프리뷰 렌더러 ────────────────────────────────
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -61,127 +77,19 @@ function formatDate(dateStr) {
   return `${year}. ${parseInt(month)}. ${parseInt(day)}.`;
 }
 
-function ArticlePreview({ guide, htmlContent }) {
-  const sections = htmlToSections(htmlContent);
-
-  return (
-    <article style={{ maxWidth: 720, margin: '0 auto', padding: '40px 24px', fontFamily: 'inherit' }}>
-      {/* 뒤로가기 (장식) */}
-      <div style={{ marginBottom: 24 }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 14, color: '#5a6a85' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7" />
-          </svg>
-          목록으로
-        </span>
-      </div>
-
-      {/* 헤더 */}
-      <header style={{ borderTop: '4px solid #ff6b57', padding: '32px 0 24px', wordBreak: 'keep-all' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <span style={{ background: '#ff6b57', color: '#fff', fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 999 }}>
-            건강 가이드
-          </span>
-          <span style={{ color: '#3268ff', fontSize: 13, fontWeight: 600 }}>
-            {guide.category || '카테고리'}
-          </span>
-        </div>
-        <h1 style={{ margin: '0 0 12px', fontSize: 'clamp(1.625rem, 4vw, 1.875rem)', fontWeight: 800, lineHeight: 1.3, letterSpacing: '-0.02em', color: '#1c2741', wordBreak: 'keep-all' }}>
-          {guide.title || '제목'}
-        </h1>
-        <p style={{ fontSize: '1rem', color: '#5a6a85', margin: '0 0 14px', lineHeight: 1.6, wordBreak: 'keep-all' }}>
-          {guide.description || '설명'}
-        </p>
-        <div style={{ fontSize: 13, color: '#9aa5b8' }}>
-          발행 {formatDate(guide.publishedAt)}&nbsp;·&nbsp;업데이트 {formatDate(guide.updatedAt)}&nbsp;·&nbsp;{guide.readTime} 읽기
-        </div>
-      </header>
-
-      {/* 핵심 요약 */}
-      {guide.keyPoints && guide.keyPoints.filter(Boolean).length > 0 && (
-        <div style={{ background: '#f4f7ff', borderLeft: '4px solid #3268ff', borderRadius: '0 12px 12px 0', padding: '20px 20px 16px', margin: '28px 0' }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#3268ff', marginBottom: 14, letterSpacing: '0.01em' }}>
-            이 글의 핵심 요약
-          </div>
-          <ol style={{ margin: 0, paddingLeft: 20 }}>
-            {guide.keyPoints.filter(Boolean).map((point, i) => (
-              <li key={i} style={{ fontSize: 15, color: '#2a3a5c', lineHeight: 1.7, marginBottom: 8, wordBreak: 'keep-all' }}>
-                {point}
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
-
-      {/* 본문 */}
-      <div className="sureline-prose">
-        {sections.map((section, idx) => (
-          <section key={idx}>
-            <h2>{section.title}</h2>
-            {section.paragraphs.map((p, i) => <p key={i}>{p}</p>)}
-            {section.bullets && (
-              <div style={{ background: '#f8f9fb', border: '1px solid #e1e5eb', borderRadius: 12, padding: '16px 18px', margin: '16px 0' }}>
-                <ul>
-                  {section.bullets.map((b, i) => <li key={i}>{b}</li>)}
-                </ul>
-              </div>
-            )}
-            {section.table && (
-              <div style={{ borderRadius: 12, border: '1px solid #dde6ff', overflowX: 'auto', margin: '16px 0' }}>
-                <table>
-                  <thead>
-                    <tr>{section.table.headers.map((h, i) => <th key={i}>{h}</th>)}</tr>
-                  </thead>
-                  <tbody>
-                    {section.table.rows.map((row, i) => (
-                      <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#f8f9fb' }}>
-                        {row.map((cell, j) => <td key={j} style={j === 0 ? { fontWeight: 600, color: '#1c2741' } : {}}>{cell}</td>)}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {section.callout && (
-              <div style={{ background: '#f0f4ff', borderLeft: '4px solid #3268ff', borderRadius: '0 8px 8px 0', padding: '14px 18px', margin: '4px 0 20px' }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#3268ff', marginBottom: 6, letterSpacing: '0.04em' }}>전문가 인사이트</div>
-                <p style={{ fontSize: 15, color: '#2a3a5c', margin: 0, lineHeight: 1.75, wordBreak: 'keep-all' }}>{section.callout}</p>
-              </div>
-            )}
-          </section>
-        ))}
-      </div>
-
-      {/* 출처 */}
-      {guide.sources && guide.sources.length > 0 && (
-        <div style={{ marginTop: 28, padding: '16px 18px', borderRadius: 10, background: '#f8f9fb', border: '1px solid #e1e5eb' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#7a8699', marginBottom: 8 }}>참고 자료</div>
-          <ul style={{ margin: 0, paddingLeft: 16 }}>
-            {guide.sources.map((s, i) => (
-              <li key={i} style={{ fontSize: 13, color: '#7a8699', lineHeight: 1.6 }}>
-                {s.name}{s.url ? ` (${s.url})` : ''}{s.accessedAt ? ` · ${formatDate(s.accessedAt)} 기준` : ''}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </article>
-  );
-}
-
 // ─── 에디터 페이지 ────────────────────────────────────────────────────────────
 
 export default function EditPage({ params }) {
   const { slug } = params;
   const router = useRouter();
-  const { isAdmin } = useAdmin();
 
   const [guide, setGuide] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [mode, setMode] = useState('visual'); // 'visual' | 'html'
   const [htmlContent, setHtmlContent] = useState('');
   const [saveMsg, setSaveMsg] = useState('');
-  const textareaRef = useRef(null);
+  const editorRef = useRef(null);
 
   // 미인증 시 홈으로
   useEffect(() => {
@@ -202,12 +110,26 @@ export default function EditPage({ params }) {
       });
   }, [slug]);
 
+  // 비주얼 에디터 초기화: htmlContent가 변경되면 contentEditable에 반영
+  // (단, 사용자가 비주얼 편집 중일 때는 덮어쓰지 않음)
+  useEffect(() => {
+    if (mode === 'visual' && editorRef.current && editorRef.current.innerHTML !== htmlContent) {
+      editorRef.current.innerHTML = htmlContent;
+    }
+  }, [mode, htmlContent]);
+
   // 저장
   const handleSave = useCallback(async () => {
     if (!guide) return;
+    // 비주얼 모드면 contentEditable에서 최신 HTML 수집
+    let latestHtml = htmlContent;
+    if (mode === 'visual' && editorRef.current) {
+      latestHtml = editorRef.current.innerHTML;
+      setHtmlContent(latestHtml);
+    }
     setSaving(true);
     setSaveMsg('');
-    const sections = htmlToSections(htmlContent);
+    const sections = htmlToSections(latestHtml);
     const token = localStorage.getItem('admin_token');
     const res = await fetch(`/api/admin/guides/${slug}`, {
       method: 'PATCH',
@@ -229,7 +151,7 @@ export default function EditPage({ params }) {
       const err = await res.json().catch(() => ({}));
       setSaveMsg(`저장 실패: ${err.error || res.status}`);
     }
-  }, [guide, htmlContent, slug]);
+  }, [guide, htmlContent, mode, slug]);
 
   // Ctrl+S 단축키
   useEffect(() => {
@@ -242,6 +164,38 @@ export default function EditPage({ params }) {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [handleSave]);
+
+  // 모드 전환
+  const switchToVisual = () => {
+    setMode('visual');
+    // useEffect가 contentEditable에 htmlContent 설정
+  };
+  const switchToHtml = () => {
+    // 비주얼 편집 내용을 htmlContent로 동기화
+    if (editorRef.current) {
+      setHtmlContent(editorRef.current.innerHTML);
+    }
+    setMode('html');
+  };
+
+  // 포맷 명령 (document.execCommand 사용 — 여전히 대부분의 브라우저에서 동작)
+  const exec = (command, value = null) => {
+    if (editorRef.current) editorRef.current.focus();
+    document.execCommand(command, false, value);
+  };
+  const formatBlock = (tag) => exec('formatBlock', tag);
+  const insertCallout = () => {
+    const text = window.prompt('인사이트 내용을 입력하세요');
+    if (text) {
+      const safe = escapeHtml(text);
+      exec('insertHTML', `<div class="callout">${safe}</div><p><br></p>`);
+    }
+  };
+  const insertLink = () => {
+    const url = window.prompt('URL을 입력하세요', 'https://');
+    if (url) exec('createLink', url);
+  };
+  const clearFormat = () => exec('removeFormat');
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: '#5a6a85' }}>
@@ -258,16 +212,13 @@ export default function EditPage({ params }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f8f9fb', overflow: 'hidden' }}>
 
-      {/* ── 툴바 ── */}
+      {/* ── 최상단 툴바 ── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px',
         height: 52, background: '#fff', borderBottom: '1px solid #e1e5eb',
         flexShrink: 0, flexWrap: 'wrap',
       }}>
-        <button
-          onClick={() => router.back()}
-          style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, color: '#5a6a85', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px' }}
-        >
+        <button onClick={() => router.back()} style={navBtnSt}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
@@ -278,7 +229,21 @@ export default function EditPage({ params }) {
           {guide.title}
         </span>
 
-        <span style={{ fontSize: 12, color: '#9aa5b8' }}>Ctrl+S로 저장</span>
+        {/* 모드 전환 */}
+        <div style={{ display: 'flex', border: '1.5px solid #dde6ff', borderRadius: 8, overflow: 'hidden' }}>
+          {[['visual', '비주얼'], ['html', 'HTML']].map(([key, label]) => (
+            <button
+              key={key}
+              onClick={key === 'visual' ? switchToVisual : switchToHtml}
+              style={{
+                padding: '6px 14px', fontSize: 13, fontWeight: 600,
+                background: mode === key ? '#3268ff' : '#fff',
+                color: mode === key ? '#fff' : '#5a6a85',
+                border: 'none', cursor: 'pointer',
+              }}
+            >{label}</button>
+          ))}
+        </div>
 
         {saveMsg && (
           <span style={{ fontSize: 13, fontWeight: 600, color: saveMsg.startsWith('저장') ? '#38a169' : '#e53e3e' }}>
@@ -286,108 +251,163 @@ export default function EditPage({ params }) {
           </span>
         )}
 
-        <button
-          onClick={() => window.open(`/guides/${slug}`, '_blank')}
-          style={{ padding: '6px 12px', fontSize: 13, fontWeight: 600, background: '#f4f7ff', color: '#3268ff', border: '1.5px solid #dde6ff', borderRadius: 8, cursor: 'pointer' }}
-        >
+        <button onClick={() => window.open(`/guides/${slug}`, '_blank')} style={outlineBtnSt}>
           발행 페이지
         </button>
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          style={{ padding: '6px 18px', fontSize: 14, fontWeight: 700, background: '#3268ff', color: '#fff', border: 'none', borderRadius: 8, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}
-        >
+        <button onClick={handleSave} disabled={saving} style={{ ...primaryBtnSt, opacity: saving ? 0.7 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}>
           {saving ? '저장 중…' : '저장'}
         </button>
       </div>
 
-      {/* ── 본문 2분할 ── */}
+      {/* ── 본문: 좌측 메타 사이드 + 메인 에디터 ── */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
-        {/* 왼쪽: 편집 패널 */}
-        <div style={{ width: '42%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #e1e5eb', overflow: 'hidden' }}>
+        {/* 왼쪽: 메타 정보 사이드바 */}
+        <div style={{ width: 320, background: '#fff', borderRight: '1px solid #e1e5eb', overflowY: 'auto', padding: '16px', flexShrink: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#3268ff', letterSpacing: '.08em', marginBottom: 12 }}>메타 정보</div>
 
-          {/* 메타 정보 */}
-          <div style={{ padding: '16px 16px 0', overflowY: 'auto', flexShrink: 0, maxHeight: '44%', borderBottom: '1px solid #e8ecf2' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#3268ff', letterSpacing: '.08em', marginBottom: 12 }}>메타 정보</div>
+          <Field label="제목">
+            <input style={inputSt} value={guide.title || ''} onChange={(e) => setGuide((g) => ({ ...g, title: e.target.value }))} />
+          </Field>
+          <Field label="설명">
+            <textarea style={{ ...inputSt, height: 60, resize: 'vertical' }} value={guide.description || ''} onChange={(e) => setGuide((g) => ({ ...g, description: e.target.value }))} />
+          </Field>
+          <Field label="카테고리">
+            <input style={inputSt} value={guide.category || ''} onChange={(e) => setGuide((g) => ({ ...g, category: e.target.value }))} />
+          </Field>
 
-            <Field label="제목">
-              <input style={inputSt} value={guide.title || ''} onChange={(e) => setGuide((g) => ({ ...g, title: e.target.value }))} />
-            </Field>
-            <Field label="설명">
-              <textarea style={{ ...inputSt, height: 60, resize: 'none' }} value={guide.description || ''} onChange={(e) => setGuide((g) => ({ ...g, description: e.target.value }))} />
-            </Field>
-            <Field label="카테고리">
-              <input style={inputSt} value={guide.category || ''} onChange={(e) => setGuide((g) => ({ ...g, category: e.target.value }))} />
-            </Field>
-
-            <Field label="핵심 요약">
-              {(guide.keyPoints || []).map((kp, i) => (
-                <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
-                  <input
-                    style={{ ...inputSt, flex: 1, marginBottom: 0 }}
-                    value={kp}
-                    onChange={(e) => {
-                      const arr = [...(guide.keyPoints || [])];
-                      arr[i] = e.target.value;
-                      setGuide((g) => ({ ...g, keyPoints: arr }));
-                    }}
-                  />
-                  <button
-                    onClick={() => setGuide((g) => ({ ...g, keyPoints: g.keyPoints.filter((_, j) => j !== i) }))}
-                    style={rmBtnSt}
-                  >✕</button>
-                </div>
-              ))}
-              <button
-                onClick={() => setGuide((g) => ({ ...g, keyPoints: [...(g.keyPoints || []), ''] }))}
-                style={addBtnSt}
-              >+ 요약 추가</button>
-            </Field>
-          </div>
-
-          {/* 본문 HTML 편집 */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '12px 16px 16px', overflow: 'hidden' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#3268ff', letterSpacing: '.08em' }}>본문 HTML</div>
-              <div style={{ fontSize: 11, color: '#9aa5b8' }}>
-                {'<h2>'} 섹션제목 {'<p>'} 문단 {'<ul><li>'} 불렛 {'<div class="callout">'}
+          <Field label="핵심 요약">
+            {(guide.keyPoints || []).map((kp, i) => (
+              <div key={i} style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                <textarea
+                  style={{ ...inputSt, flex: 1, marginBottom: 0, height: 44, resize: 'vertical' }}
+                  value={kp}
+                  onChange={(e) => {
+                    const arr = [...(guide.keyPoints || [])];
+                    arr[i] = e.target.value;
+                    setGuide((g) => ({ ...g, keyPoints: arr }));
+                  }}
+                />
+                <button onClick={() => setGuide((g) => ({ ...g, keyPoints: g.keyPoints.filter((_, j) => j !== i) }))} style={rmBtnSt}>✕</button>
               </div>
-            </div>
-            <textarea
-              ref={textareaRef}
-              value={htmlContent}
-              onChange={(e) => setHtmlContent(e.target.value)}
-              spellCheck={false}
-              style={{
-                flex: 1,
-                width: '100%',
-                padding: '12px',
-                fontSize: 13,
-                fontFamily: '"Fira Code", "Consolas", "Courier New", monospace',
-                lineHeight: 1.75,
-                border: '1.5px solid #dde6ff',
-                borderRadius: 8,
-                outline: 'none',
-                resize: 'none',
-                color: '#1c2741',
-                background: '#fafbff',
-                boxSizing: 'border-box',
-              }}
-            />
+            ))}
+            <button onClick={() => setGuide((g) => ({ ...g, keyPoints: [...(g.keyPoints || []), ''] }))} style={addBtnSt}>+ 요약 추가</button>
+          </Field>
+
+          <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px dashed #e1e5eb', fontSize: 12, color: '#9aa5b8', lineHeight: 1.6 }}>
+            <div>발행일: {formatDate(guide.publishedAt)}</div>
+            <div>수정 시에도 발행일은 유지됩니다.</div>
           </div>
         </div>
 
-        {/* 오른쪽: 실제 발행 페이지와 동일한 프리뷰 */}
-        <div style={{ flex: 1, overflowY: 'auto', background: '#fff' }}>
-          <div style={{ borderBottom: '1px solid #f0f2f5', padding: '6px 16px', background: '#fafbff', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff6b57' }} />
-            <div style={{ fontSize: 11, color: '#9aa5b8', fontWeight: 600, letterSpacing: '.06em' }}>
-              실시간 프리뷰 — sureline.kr/guides/{slug}
+        {/* 오른쪽: 메인 에디터 */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#fff' }}>
+
+          {/* 포맷 툴바 (비주얼 모드만) */}
+          {mode === 'visual' && (
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', gap: 4, padding: '8px 16px',
+              borderBottom: '1px solid #e1e5eb', background: '#fafbff', flexShrink: 0,
+            }}>
+              <ToolBtn onClick={() => formatBlock('h2')} title="섹션 제목 (H2)"><strong>H2</strong></ToolBtn>
+              <ToolBtn onClick={() => formatBlock('h3')} title="소제목 (H3)"><strong>H3</strong></ToolBtn>
+              <ToolBtn onClick={() => formatBlock('p')} title="본문 문단">P</ToolBtn>
+              <Sep />
+              <ToolBtn onClick={() => exec('bold')} title="굵게"><strong>B</strong></ToolBtn>
+              <ToolBtn onClick={() => exec('italic')} title="기울임"><em>I</em></ToolBtn>
+              <ToolBtn onClick={() => exec('underline')} title="밑줄"><u>U</u></ToolBtn>
+              <Sep />
+              <ToolBtn onClick={() => exec('insertUnorderedList')} title="글머리 기호">• 목록</ToolBtn>
+              <ToolBtn onClick={() => exec('insertOrderedList')} title="번호 매기기">1. 목록</ToolBtn>
+              <Sep />
+              <ToolBtn onClick={insertLink} title="링크">🔗 링크</ToolBtn>
+              <ToolBtn onClick={insertCallout} title="인사이트 박스">💡 인사이트</ToolBtn>
+              <Sep />
+              <ToolBtn onClick={() => exec('undo')} title="실행 취소">↶</ToolBtn>
+              <ToolBtn onClick={() => exec('redo')} title="다시 실행">↷</ToolBtn>
+              <ToolBtn onClick={clearFormat} title="서식 지우기">✕ 서식</ToolBtn>
+            </div>
+          )}
+
+          {/* 편집 영역 */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 32px' }}>
+            <div style={{ maxWidth: 720, margin: '0 auto' }}>
+
+              {/* 미리보기 헤더 (편집 불가, 참고용) */}
+              <div style={{ borderTop: '4px solid #ff6b57', padding: '24px 0 20px', marginBottom: 12, wordBreak: 'keep-all' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                  <span style={{ background: '#ff6b57', color: '#fff', fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 999 }}>건강 가이드</span>
+                  <span style={{ color: '#3268ff', fontSize: 13, fontWeight: 600 }}>{guide.category || '카테고리'}</span>
+                </div>
+                <h1 style={{ margin: '0 0 12px', fontSize: 'clamp(1.625rem, 4vw, 1.875rem)', fontWeight: 800, lineHeight: 1.3, letterSpacing: '-0.02em', color: '#1c2741' }}>
+                  {guide.title || '제목'}
+                </h1>
+                <p style={{ fontSize: '1rem', color: '#5a6a85', margin: '0 0 14px', lineHeight: 1.6 }}>
+                  {guide.description || '설명'}
+                </p>
+                <div style={{ fontSize: 13, color: '#9aa5b8' }}>
+                  발행 {formatDate(guide.publishedAt)} · 업데이트 {formatDate(guide.updatedAt)} · {guide.readTime} 읽기
+                </div>
+              </div>
+
+              {/* 핵심 요약 박스 (편집 불가, 왼쪽 사이드에서 편집) */}
+              {guide.keyPoints && guide.keyPoints.filter(Boolean).length > 0 && (
+                <div style={{ background: '#f4f7ff', borderLeft: '4px solid #3268ff', borderRadius: '0 12px 12px 0', padding: '20px 20px 16px', margin: '0 0 28px' }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#3268ff', marginBottom: 14 }}>이 글의 핵심 요약</div>
+                  <ol style={{ margin: 0, paddingLeft: 20 }}>
+                    {guide.keyPoints.filter(Boolean).map((point, i) => (
+                      <li key={i} style={{ fontSize: 15, color: '#2a3a5c', lineHeight: 1.7, marginBottom: 8, wordBreak: 'keep-all' }}>{point}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              {/* ─── 본문 편집 영역 (핵심) ─── */}
+              {mode === 'visual' ? (
+                <div
+                  ref={editorRef}
+                  className="sureline-prose"
+                  contentEditable
+                  suppressContentEditableWarning
+                  onBlur={() => {
+                    if (editorRef.current) setHtmlContent(editorRef.current.innerHTML);
+                  }}
+                  style={{
+                    outline: 'none',
+                    minHeight: 400,
+                    padding: '8px 0',
+                    caretColor: '#3268ff',
+                  }}
+                />
+              ) : (
+                <div>
+                  <div style={{ fontSize: 11, color: '#9aa5b8', marginBottom: 8 }}>
+                    {'<h2>'} 섹션제목 {'<p>'} 문단 {'<ul><li>'} 불렛 {'<div class="callout">'} 인사이트
+                  </div>
+                  <textarea
+                    value={htmlContent}
+                    onChange={(e) => setHtmlContent(e.target.value)}
+                    spellCheck={false}
+                    style={{
+                      width: '100%',
+                      minHeight: 500,
+                      padding: 14,
+                      fontSize: 13,
+                      fontFamily: '"Fira Code", "Consolas", "Courier New", monospace',
+                      lineHeight: 1.75,
+                      border: '1.5px solid #dde6ff',
+                      borderRadius: 8,
+                      outline: 'none',
+                      resize: 'vertical',
+                      color: '#1c2741',
+                      background: '#fafbff',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
-          <ArticlePreview guide={guide} htmlContent={htmlContent} />
         </div>
 
       </div>
@@ -395,15 +415,38 @@ export default function EditPage({ params }) {
   );
 }
 
-// ─── 작은 헬퍼 컴포넌트 ─────────────────────────────────────────────────────
+// ─── 작은 헬퍼 ────────────────────────────────────────────────────────────────
 
 function Field({ label, children }) {
   return (
-    <div style={{ marginBottom: 10 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: '#7a8699', marginBottom: 3, letterSpacing: '.03em' }}>{label}</div>
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: '#7a8699', marginBottom: 4, letterSpacing: '.03em' }}>{label}</div>
       {children}
     </div>
   );
+}
+
+function ToolBtn({ onClick, title, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseDown={(e) => e.preventDefault()}
+      title={title}
+      style={{
+        padding: '5px 10px', fontSize: 13,
+        background: '#fff', color: '#1c2741',
+        border: '1px solid #dde6ff', borderRadius: 6,
+        cursor: 'pointer', minWidth: 32,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Sep() {
+  return <div style={{ width: 1, background: '#dde6ff', margin: '0 4px' }} />;
 }
 
 // ─── 스타일 상수 ─────────────────────────────────────────────────────────────
@@ -412,7 +455,7 @@ const inputSt = {
   display: 'block', width: '100%', padding: '7px 9px', fontSize: 13,
   border: '1.5px solid #dde6ff', borderRadius: 7, outline: 'none',
   marginBottom: 4, boxSizing: 'border-box', color: '#1c2741', lineHeight: 1.5,
-  background: '#fff',
+  background: '#fff', fontFamily: 'inherit',
 };
 
 const rmBtnSt = {
@@ -424,4 +467,21 @@ const addBtnSt = {
   padding: '4px 10px', fontSize: 12, fontWeight: 600,
   background: '#f4f7ff', color: '#3268ff', border: '1.5px solid #dde6ff',
   borderRadius: 7, cursor: 'pointer', marginTop: 2,
+};
+
+const navBtnSt = {
+  display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, color: '#5a6a85',
+  background: 'none', border: 'none', cursor: 'pointer', padding: '4px 6px',
+};
+
+const outlineBtnSt = {
+  padding: '6px 12px', fontSize: 13, fontWeight: 600,
+  background: '#f4f7ff', color: '#3268ff',
+  border: '1.5px solid #dde6ff', borderRadius: 8, cursor: 'pointer',
+};
+
+const primaryBtnSt = {
+  padding: '6px 18px', fontSize: 14, fontWeight: 700,
+  background: '#3268ff', color: '#fff',
+  border: 'none', borderRadius: 8,
 };
