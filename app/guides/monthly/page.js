@@ -1,16 +1,16 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "월간 직장인 건강 정리 — 2025년 4월",
+  title: "월간 직장인 건강 정리 — 2026년 4월",
   description: "이번 달 직장인이 주의해야 할 건강 이슈와 최근 업데이트된 sureline 가이드를 정리합니다.",
   alternates: { canonical: "https://sureline.kr/guides/monthly" },
   openGraph: { title: "월간 건강 정리 | sureline", url: "https://sureline.kr/guides/monthly", type: "article" },
 };
 
 const CURRENT = {
-  year: 2025,
+  year: 2026,
   month: 4,
-  label: "2025년 4월",
+  label: "2026년 4월",
   season: "봄 환절기",
   seasonIcon: "🌸",
   highlights: [

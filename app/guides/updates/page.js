@@ -9,7 +9,7 @@ export const metadata = {
 
 const UPDATES = [
   {
-    date: "2025-04-17",
+    date: "2026-04-17",
     type: "추가",
     typeColor: "#16a34a",
     typeBg: "#f0fff4",
@@ -25,7 +25,7 @@ const UPDATES = [
     ],
   },
   {
-    date: "2025-04-15",
+    date: "2026-04-15",
     type: "추가",
     typeColor: "#16a34a",
     typeBg: "#f0fff4",
@@ -37,7 +37,7 @@ const UPDATES = [
     ],
   },
   {
-    date: "2025-04-01",
+    date: "2026-04-01",
     type: "추가",
     typeColor: "#16a34a",
     typeBg: "#f0fff4",
