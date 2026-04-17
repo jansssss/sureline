@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { fetchAllGuidesWithSections } from "@/lib/supabase-server";
+import { fetchAllGuidesWithSections, fetchAllCategories } from "@/lib/supabase-server";
 import PostCTA from "@/components/PostCTA";
+import CategorySidebar from "@/components/CategorySidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,10 @@ function formatDate(dateStr) {
 }
 
 export default async function HomePage() {
-  const guides = await fetchAllGuidesWithSections(10);
+  const [guides, categories] = await Promise.all([
+    fetchAllGuidesWithSections(10),
+    fetchAllCategories(),
+  ]);
   const featured = guides.slice(0, 3);
   const rest = guides.slice(3);
 
@@ -20,7 +24,7 @@ export default async function HomePage() {
 
       {/* 히어로 */}
       <div style={{ borderTop: "4px solid #3268ff", background: "#f4f7ff", padding: "32px 0 24px" }}>
-        <div className="mx-auto max-w-3xl px-4">
+        <div className="mx-auto max-w-5xl px-4">
           <h1 style={{ fontSize: "clamp(1.375rem, 4vw, 1.75rem)", fontWeight: 800, color: "#1c2741", marginBottom: "8px", lineHeight: 1.3, wordBreak: "keep-all" }}>
             직장인 통증·피로, 원인부터 해결까지
           </h1>
@@ -30,8 +34,12 @@ export default async function HomePage() {
         </div>
       </div>
 
+      <CategorySidebar categories={categories} currentCategory={null} variant="mobile" />
+
       {/* 글 피드 — 최신 3개 전체 본문 노출 (Blogger 스타일) */}
-      <div className="mx-auto max-w-3xl px-4 py-6">
+      <div className="mx-auto max-w-5xl px-4 py-6 cat-layout">
+        <CategorySidebar categories={categories} currentCategory={null} variant="desktop" />
+        <div style={{ flex: 1, minWidth: 0 }}>
         {guides.length === 0 && (
           <p className="text-center py-16 text-sm" style={{ color: "#9aa5b8" }}>아직 작성된 글이 없습니다.</p>
         )}
@@ -224,6 +232,7 @@ export default async function HomePage() {
             </Link>
           </div>
         )}
+        </div>
       </div>
 
     </main>
