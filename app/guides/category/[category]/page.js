@@ -47,7 +47,9 @@ export default async function CategoryPage({ params }) {
 
       {/* 헤더 */}
       <div style={{ borderTop: "4px solid #3268ff", background: "#f4f7ff", padding: "28px 0 20px" }}>
-        <div className="mx-auto max-w-5xl px-4">
+        <div className="mx-auto max-w-5xl px-4" style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
+          <div className="cat-desktop" style={{ width: 220, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
           <div className="mb-3">
             <Link
               href="/guides"
@@ -72,6 +74,7 @@ export default async function CategoryPage({ params }) {
             </h1>
           </div>
           <p style={{ fontSize: 13, color: "#9aa5b8", marginTop: 6 }}>총 {guides.length}개의 가이드</p>
+          </div>
         </div>
       </div>
 

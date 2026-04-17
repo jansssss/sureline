@@ -51,9 +51,12 @@ export default async function GuidesPage({ searchParams }) {
 
       {/* 헤더 */}
       <div style={{ borderTop: "4px solid #3268ff", background: "#f4f7ff", padding: "28px 0 20px" }}>
-        <div className="mx-auto max-w-5xl px-4">
-          <h1 style={{ fontSize: "1.375rem", fontWeight: 800, color: "#1c2741", marginBottom: "4px" }}>전체 글</h1>
-          <p style={{ fontSize: "13px", color: "#9aa5b8" }}>총 {guides.length}개의 가이드</p>
+        <div className="mx-auto max-w-5xl px-4" style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
+          <div className="cat-desktop" style={{ width: 220, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1 style={{ fontSize: "1.375rem", fontWeight: 800, color: "#1c2741", marginBottom: "4px" }}>전체 글</h1>
+            <p style={{ fontSize: "13px", color: "#9aa5b8" }}>총 {guides.length}개의 가이드</p>
+          </div>
         </div>
       </div>
 

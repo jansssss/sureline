@@ -24,13 +24,16 @@ export default async function HomePage() {
 
       {/* 히어로 */}
       <div style={{ borderTop: "4px solid #3268ff", background: "#f4f7ff", padding: "32px 0 24px" }}>
-        <div className="mx-auto max-w-5xl px-4">
-          <h1 style={{ fontSize: "clamp(1.375rem, 4vw, 1.75rem)", fontWeight: 800, color: "#1c2741", marginBottom: "8px", lineHeight: 1.3, wordBreak: "keep-all" }}>
-            직장인 통증·피로, 원인부터 해결까지
-          </h1>
-          <p style={{ fontSize: "14px", color: "#5a6a85", lineHeight: 1.7, wordBreak: "keep-all" }}>
-            목·어깨·허리 통증, 눈 피로, 만성 피로를 직접 해결하는 실용 가이드 모음입니다.
-          </p>
+        <div className="mx-auto max-w-5xl px-4" style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
+          <div className="cat-desktop" style={{ width: 220, flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1 style={{ fontSize: "clamp(1.375rem, 4vw, 1.75rem)", fontWeight: 800, color: "#1c2741", marginBottom: "8px", lineHeight: 1.3, wordBreak: "keep-all" }}>
+              직장인 통증·피로, 원인부터 해결까지
+            </h1>
+            <p style={{ fontSize: "14px", color: "#5a6a85", lineHeight: 1.7, wordBreak: "keep-all" }}>
+              목·어깨·허리 통증, 눈 피로, 만성 피로를 직접 해결하는 실용 가이드 모음입니다.
+            </p>
+          </div>
         </div>
       </div>
 
