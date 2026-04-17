@@ -27,7 +27,7 @@ jobs:
         if: github.event_name == 'schedule'
         shell: bash
         run: |
-          DELAY=$(( RANDOM % 30 ))
+          DELAY=$(( RANDOM % 10 ))
           echo "랜덤 지연: ${DELAY}분 대기"
           sleep "${DELAY}m"
 
