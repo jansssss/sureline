@@ -37,7 +37,7 @@ export default function Footer() {
     <>
       <footer className="border-t border-gray-200 bg-gray-50 mt-auto py-8">
         <div className="mx-auto max-w-3xl px-4">
-          <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 mb-2">
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 mb-4">
             <Link href="/about" className="hover:text-gray-800 transition-colors">필자 소개</Link>
             <span>·</span>
             <Link href="/editorial" className="hover:text-gray-800 transition-colors">편집 원칙</Link>
@@ -47,8 +47,7 @@ export default function Footer() {
             <Link href="/disclosure" className="hover:text-gray-800 transition-colors">광고 고지</Link>
             <span>·</span>
             <Link href="/contact" className="hover:text-gray-800 transition-colors">문의</Link>
-          </div>
-          <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 mb-4">
+            <span>·</span>
             <Link href="/privacy" className="hover:text-gray-800 transition-colors">개인정보처리방침</Link>
             <span>·</span>
             <Link href="/terms" className="hover:text-gray-800 transition-colors">이용약관</Link>
@@ -60,14 +59,14 @@ export default function Footer() {
             {isAdmin ? (
               <button
                 onClick={logout}
-                style={{ fontSize: '10px', color: '#c8d0de', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
+                style={{ fontSize: '10px', color: '#9aa5b8', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
               >
                 관리자 로그아웃
               </button>
             ) : (
               <button
                 onClick={() => setShowModal(true)}
-                style={{ fontSize: '10px', color: '#c8d0de', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
+                style={{ fontSize: '10px', color: '#9aa5b8', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
               >
                 관리자
               </button>
