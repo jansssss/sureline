@@ -29,7 +29,7 @@ export default function AuthorBio() {
           flexShrink: 0,
         }}
       >
-        🧬
+        ✍️
       </div>
 
       {/* 텍스트 */}
@@ -47,7 +47,7 @@ export default function AuthorBio() {
               border: "1px solid #dde6ff",
             }}
           >
-            생명과학 전문가
+            직업 건강 전문 취재작가
           </span>
         </div>
 
@@ -60,10 +60,9 @@ export default function AuthorBio() {
             margin: "0 0 12px",
           }}
         >
-          국내 바이오 특화 기관에서 10년 이상 재직하며 Red·Green·Blue·White Bio
-          전 분야 R&D 및 연구 프로젝트를 수행해 왔습니다.
-          국내외 컨퍼런스와 전문가 회의에서 축적한 근거 중심 지식을 직장인이
-          일상에서 바로 적용할 수 있는 건강 정보로 전달합니다.
+          8년 이상 직업 건강·근골격계·피로 분야를 전문으로 취재해 왔습니다.
+          정형외과·산업의학 전문의, 물리치료사 등 현장 전문가와의 인터뷰를 통해
+          검증된 정보만을 직장인 눈높이에 맞게 풀어 전달합니다.
         </p>
 
         <Link

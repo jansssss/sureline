@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { fetchGuideBySlug, fetchAdjacentGuides } from "@/lib/supabase-server";
+import { fetchGuideBySlug, fetchAdjacentGuides, fetchAllCategories } from "@/lib/supabase-server";
 import PostCTA from "@/components/PostCTA";
 import AuthorBio from "@/components/AuthorBio";
+import CategorySidebar from "@/components/CategorySidebar";
 import AdminEditButton from "@/components/AdminEditButton";
 
 export const dynamic = "force-dynamic";
@@ -82,7 +83,10 @@ export default async function GuideDetailPage({ params }) {
 
   if (!guide) notFound();
 
-  const { prev, next } = await fetchAdjacentGuides(params.slug, guide.publishedAt);
+  const [{ prev, next }, categories] = await Promise.all([
+    fetchAdjacentGuides(params.slug, guide.publishedAt),
+    fetchAllCategories(),
+  ]);
 
   const url = `${SITE_URL}/guides/${guide.slug}`;
   const ogImage = extractFirstImage(guide.sections) || DEFAULT_OG_IMAGE;
@@ -122,7 +126,11 @@ export default async function GuideDetailPage({ params }) {
   };
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-10">
+    <div className="mx-auto max-w-5xl px-4 py-10">
+    <CategorySidebar categories={categories} currentCategory={guide.category} />
+    <div style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
+      <CategorySidebar categories={categories} currentCategory={guide.category} />
+    <article style={{ flex: 1, minWidth: 0 }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
@@ -418,5 +426,7 @@ export default async function GuideDetailPage({ params }) {
         </Link>
       </div>
     </article>
+    </div>
+    </div>
   );
 }

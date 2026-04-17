@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { fetchAllGuides } from "@/lib/supabase-server";
+import { fetchAllGuides, fetchAllCategories } from "@/lib/supabase-server";
+import CategorySidebar from "@/components/CategorySidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ function formatDate(dateStr) {
 }
 
 export default async function GuidesPage({ searchParams }) {
-  const guides = await fetchAllGuides(200);
+  const [guides, categories] = await Promise.all([fetchAllGuides(200), fetchAllCategories()]);
   const totalPages = Math.ceil(guides.length / PAGE_SIZE);
   const currentPage = Math.min(Math.max(Number(searchParams?.page) || 1, 1), totalPages || 1);
   const paged = guides.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -41,14 +42,23 @@ export default async function GuidesPage({ searchParams }) {
 
       {/* 헤더 */}
       <div style={{ borderTop: "4px solid #3268ff", background: "#f4f7ff", padding: "28px 0 20px" }}>
-        <div className="mx-auto max-w-3xl px-4">
+        <div className="mx-auto max-w-5xl px-4">
           <h1 style={{ fontSize: "1.375rem", fontWeight: 800, color: "#1c2741", marginBottom: "4px" }}>전체 글</h1>
           <p style={{ fontSize: "13px", color: "#9aa5b8" }}>총 {guides.length}개의 가이드</p>
         </div>
       </div>
 
-      {/* 글 피드 */}
-      <div className="mx-auto max-w-3xl px-4 py-6">
+      {/* 모바일 카테고리 */}
+      <CategorySidebar categories={categories} currentCategory={null} />
+
+      {/* 본문 + 사이드바 */}
+      <div className="mx-auto max-w-5xl px-4 py-6" style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
+
+        {/* 데스크톱 사이드바 */}
+        <CategorySidebar categories={categories} currentCategory={null} />
+
+        {/* 글 피드 */}
+        <div style={{ flex: 1, minWidth: 0 }}>
         {paged.length > 0 ? (
           <div>
             {paged.map((guide, idx) => (
@@ -180,7 +190,8 @@ export default async function GuidesPage({ searchParams }) {
             )}
           </div>
         )}
-      </div>
+        </div> {/* 글 피드 end */}
+      </div> {/* 본문 + 사이드바 end */}
 
     </main>
   );

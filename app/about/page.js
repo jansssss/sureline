@@ -2,11 +2,11 @@ import Link from "next/link";
 
 export const metadata = {
   title: "소개",
-  description: "국내 바이오 특화 기관 10년 이상 재직 R&D 전문가가 운영하는 직장인 건강 가이드. Red·Green·Blue·White Bio 분야 연구 경험과 국내외 컨퍼런스에서 얻은 근거 중심 건강 정보를 전달합니다.",
+  description: "8년 이상 직업 건강·근골격계 분야를 전문으로 취재한 작가가 운영하는 직장인 건강 가이드. 전문의·물리치료사 검증을 거친 실용 정보를 전달합니다.",
   alternates: { canonical: "https://sureline.kr/about" },
   openGraph: {
-    title: "sureline 소개 — 생명과학 전문가의 직장인 건강 가이드",
-    description: "국내 바이오 특화 기관 10년 이상 재직 R&D 전문가가 운영. 근거 기반 직장인 건강 정보 제공.",
+    title: "sureline 소개 — 8년차 취재작가의 직장인 건강 가이드",
+    description: "직업 건강 전문 취재작가가 전문의·물리치료사와 함께 검증한 근거 기반 직장인 건강 정보.",
     url: "https://sureline.kr/about",
     type: "website",
   },
@@ -92,44 +92,42 @@ export default function AboutPage() {
                   background: "#f4f7ff", color: "#3268ff", fontSize: 12, fontWeight: 700,
                   padding: "3px 10px", borderRadius: 999, border: "1px solid #dde6ff",
                 }}>
-                  생명과학 전문가
+                  직업 건강 전문 취재작가
                 </span>
               </div>
 
               <p style={{ fontSize: 14, color: "#3268ff", fontWeight: 600, marginBottom: 14 }}>
-                국내 바이오 특화 기관 · 10년 이상 재직 · R&D 연구원
+                직업 건강·근골격계·피로 분야 취재 8년 이상
               </p>
 
               <p style={{
                 fontSize: 14, color: "#3a4a62", lineHeight: 1.85,
                 wordBreak: "keep-all", marginBottom: 16,
               }}>
-                국내 주요 바이오 특화 기관에서 10년 이상 현업에 종사하며,
-                <strong> Red Bio(의약·신약 개발), Green Bio(농생명·기능성 소재),
-                Blue Bio(해양 유래 바이오소재), White Bio(산업용 바이오·환경)</strong>
-                전 분야에 걸쳐 R&D 기획·수행과 연구 프로젝트에 참여해 왔습니다.
+                8년 이상 직업 건강·근골격계 질환·피로 관리 분야를 전문으로 취재해 왔습니다.
+                정형외과·산업의학 전문의, 물리치료사, 작업환경 전문가를 직접 인터뷰하고
+                학술 자료를 교차 검증하면서, 이론과 현장 사이의 간극을 메우는 글을 써왔습니다.
               </p>
 
               <p style={{
                 fontSize: 14, color: "#3a4a62", lineHeight: 1.85,
                 wordBreak: "keep-all", marginBottom: 20,
               }}>
-                국내외 학술 컨퍼런스 및 전문가 회의에 정기적으로 참석하며 최신 생명과학
-                연구 동향을 직접 파악합니다. 이 과정에서 접하는 근거 중심의 지식을
-                사무직 직장인이 일상에서 실제로 활용할 수 있는 건강 정보로 번역하는 것이
-                sureline의 시작이었습니다.
+                전문가의 지식은 있지만 정작 직장인이 읽기엔 너무 어렵고,
+                쉬운 콘텐츠는 근거가 부족한 경우가 많습니다.
+                sureline은 그 사이 어딘가 — 전문의가 검증한 내용을 직장인이 오늘 바로 쓸 수 있는 형태로
+                전달하는 것을 목표로 합니다.
               </p>
 
               {/* 뱃지 */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {[
-                  "🔴 Red Bio · 의약/신약",
-                  "🟢 Green Bio · 농생명",
-                  "🔵 Blue Bio · 해양소재",
-                  "⚪ White Bio · 산업환경",
-                  "📊 R&D 기획·수행",
-                  "🎤 국내외 컨퍼런스",
-                  "📄 학술 연구 참여",
+                  "✍️ 취재 경력 8년+",
+                  "🏥 전문의 인터뷰 검증",
+                  "🦴 근골격계 전문",
+                  "😴 피로·수면 전문",
+                  "👁️ 눈 건강·직업병",
+                  "📋 학술 자료 교차검증",
                 ].map((tag) => (
                   <span key={tag} style={{
                     background: "#f8f9fb", border: "1px solid #e1e5eb",
@@ -151,10 +149,9 @@ export default function AboutPage() {
               fontSize: 15, color: "#2a3a5c", lineHeight: 1.85,
               fontStyle: "italic", wordBreak: "keep-all", margin: 0,
             }}>
-              "연구 현장에서 쌓은 생명과학 지식이, 정작 책상 앞에 앉아 허리와 목이 아픈
-              직장인에게는 닿지 않는다는 것을 오래 전부터 느꼈습니다.
-              근거는 있지만 어렵게 느껴지는 정보를, 누구나 오늘 바로 적용할 수 있는 형태로
-              전달하는 것 — 그것이 sureline이 존재하는 이유입니다."
+              "전문의에게 직접 들은 이야기와 논문에 나온 내용이 왜 이렇게 다른지,
+              취재를 시작하고 나서야 알았습니다. 둘 다 맞지만 맥락이 다릅니다.
+              그 맥락을 제대로 전달하는 것 — 그게 sureline이 하려는 일입니다."
             </p>
             <div style={{ marginTop: 12, fontSize: 13, color: "#7a8699", fontWeight: 600 }}>
               — sureline 편집장

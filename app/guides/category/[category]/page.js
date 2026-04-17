@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchGuidesByCategory, fetchAllCategories } from "@/lib/supabase-server";
+import CategorySidebar from "@/components/CategorySidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,10 @@ export async function generateMetadata({ params }) {
 
 export default async function CategoryPage({ params }) {
   const category = decodeURIComponent(params.category);
-  const guides = await fetchGuidesByCategory(category);
+  const [guides, categories] = await Promise.all([
+    fetchGuidesByCategory(category),
+    fetchAllCategories(),
+  ]);
 
   if (!guides.length) notFound();
 
@@ -34,7 +38,7 @@ export default async function CategoryPage({ params }) {
 
       {/* 헤더 */}
       <div style={{ borderTop: "4px solid #3268ff", background: "#f4f7ff", padding: "28px 0 20px" }}>
-        <div className="mx-auto max-w-3xl px-4">
+        <div className="mx-auto max-w-5xl px-4">
           <div className="mb-3">
             <Link
               href="/guides"
@@ -62,8 +66,15 @@ export default async function CategoryPage({ params }) {
         </div>
       </div>
 
-      {/* 글 목록 */}
-      <div className="mx-auto max-w-3xl px-4 py-6">
+      {/* 모바일 카테고리 */}
+      <CategorySidebar categories={categories} currentCategory={category} />
+
+      {/* 본문 + 사이드바 */}
+      <div className="mx-auto max-w-5xl px-4 py-6" style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
+        <CategorySidebar categories={categories} currentCategory={category} />
+
+        {/* 글 목록 */}
+        <div style={{ flex: 1, minWidth: 0 }}>
         {guides.map((guide, idx) => (
           <article
             key={guide.slug}
@@ -106,7 +117,8 @@ export default async function CategoryPage({ params }) {
             </Link>
           </article>
         ))}
-      </div>
+        </div> {/* 글 목록 end */}
+      </div> {/* 본문 + 사이드바 end */}
     </main>
   );
 }
