@@ -3,10 +3,24 @@ import { fetchAllGuides } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "전체 글 — sureline",
-  description: "직장인 목·어깨·허리 통증, 눈 피로, 피로 회복 관련 모든 가이드 목록입니다.",
-};
+const SITE_URL = "https://sureline.kr";
+
+export async function generateMetadata({ searchParams }) {
+  const page = Math.max(Number(searchParams?.page) || 1, 1);
+  const canonical = page === 1 ? `${SITE_URL}/guides` : `${SITE_URL}/guides?page=${page}`;
+  const title = page === 1 ? "전체 글" : `전체 글 (${page}페이지)`;
+  const description = page === 1
+    ? "직장인 목·어깨·허리 통증, 눈 피로, 피로 회복 관련 모든 가이드 목록입니다."
+    : `직장인 건강 가이드 ${page}페이지 목록입니다.`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical, type: "website" },
+    robots: { index: true, follow: true },
+  };
+}
 
 const PAGE_SIZE = 5;
 

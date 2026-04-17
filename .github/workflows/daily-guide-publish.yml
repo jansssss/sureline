@@ -14,9 +14,7 @@ on:
         default: false
         type: boolean
   schedule:
-    - cron: "0 23 * * *"   # 1회차: KST 08:00 시작 (UTC 23:00 전날)
-    - cron: "0 7 * * *"    # 2회차: KST 16:00 시작 (UTC 07:00)
-    - cron: "0 15 * * *"   # 3회차: KST 00:00 시작 (UTC 15:00)
+    - cron: "0 23 * * *"   # 하루 1회: KST 08:00 시작 (UTC 23:00 전날)
 
 jobs:
   publish:

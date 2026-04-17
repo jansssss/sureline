@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const SITE_URL = "https://sureline.kr";
+const DEFAULT_OG_IMAGE = `${SITE_URL}/opengraph-image`;
 
 function formatDate(dateStr) {
   if (!dateStr) return "";
@@ -15,12 +16,63 @@ function formatDate(dateStr) {
   return `${year}. ${parseInt(month)}. ${parseInt(day)}.`;
 }
 
+/** 본문에서 첫 이미지 URL 추출 (OG 이미지용) */
+function extractFirstImage(sections) {
+  for (const s of sections || []) {
+    for (const p of s.paragraphs || []) {
+      if (typeof p === "string" && p.startsWith("<img")) {
+        const m = p.match(/src="([^"]+)"/);
+        if (m) return m[1];
+      }
+    }
+  }
+  return null;
+}
+
+/** 본문 전체 텍스트 추출 (articleBody + wordCount용) */
+function extractBodyText(sections) {
+  const parts = [];
+  for (const s of sections || []) {
+    if (s.title) parts.push(s.title);
+    for (const p of s.paragraphs || []) {
+      if (typeof p === "string" && !p.startsWith("<img")) parts.push(p);
+    }
+    if (s.bullets) parts.push(...s.bullets);
+    if (s.callout) parts.push(s.callout);
+  }
+  return parts.join(" ");
+}
+
 export async function generateMetadata({ params }) {
   const guide = await fetchGuideBySlug(params.slug);
-  if (!guide) return { title: "글을 찾을 수 없습니다 — sureline" };
+  if (!guide) return { title: "글을 찾을 수 없습니다" };
+
+  const url = `${SITE_URL}/guides/${guide.slug}`;
+  const ogImage = extractFirstImage(guide.sections) || DEFAULT_OG_IMAGE;
+
   return {
-    title: `${guide.title} | sureline`,
+    title: guide.title,
     description: guide.description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      url,
+      title: guide.title,
+      description: guide.description,
+      siteName: "sureline",
+      locale: "ko_KR",
+      publishedTime: guide.publishedAt,
+      modifiedTime: guide.updatedAt,
+      authors: ["sureline"],
+      section: guide.category,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: guide.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: guide.title,
+      description: guide.description,
+      images: [ogImage],
+    },
   };
 }
 
@@ -31,23 +83,52 @@ export default async function GuideDetailPage({ params }) {
 
   const { prev, next } = await fetchAdjacentGuides(params.slug, guide.publishedAt);
 
-  const jsonLd = {
+  const url = `${SITE_URL}/guides/${guide.slug}`;
+  const ogImage = extractFirstImage(guide.sections) || DEFAULT_OG_IMAGE;
+  const bodyText = extractBodyText(guide.sections);
+  const wordCount = bodyText.trim().split(/\s+/).filter(Boolean).length;
+
+  const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
     headline: guide.title,
     description: guide.description,
+    image: [ogImage],
     datePublished: guide.publishedAt,
     dateModified: guide.updatedAt,
-    url: `${SITE_URL}/guides/${guide.slug}`,
+    url,
+    articleSection: guide.category,
+    wordCount,
+    articleBody: bodyText,
     author: { "@type": "Organization", name: "sureline", url: SITE_URL },
-    publisher: { "@type": "Organization", name: "sureline", url: SITE_URL },
+    publisher: {
+      "@type": "Organization",
+      name: "sureline",
+      url: SITE_URL,
+      logo: { "@type": "ImageObject", url: DEFAULT_OG_IMAGE },
+    },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "홈", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "전체 글", item: `${SITE_URL}/guides` },
+      { "@type": "ListItem", position: 3, name: guide.title, item: url },
+    ],
   };
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-10">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       {/* 뒤로가기 */}
@@ -144,11 +225,16 @@ export default async function GuideDetailPage({ params }) {
           <section key={idx}>
             <h2>{section.title}</h2>
 
-            {section.paragraphs.map((p, i) => (
-              typeof p === 'string' && p.startsWith('<img')
-                ? <p key={i} dangerouslySetInnerHTML={{ __html: p.replace(/<img([^>]*?)>/, '<img$1 style="max-width:100%;height:auto;border-radius:12px;margin:16px 0;" />') }} />
-                : <p key={i}>{p}</p>
-            ))}
+            {section.paragraphs.map((p, i) => {
+              if (typeof p === 'string' && p.startsWith('<img')) {
+                let html = p;
+                if (!/\salt=/.test(html)) html = html.replace(/<img/, `<img alt="${guide.title.replace(/"/g, '&quot;')}"`);
+                if (!/loading=/.test(html)) html = html.replace(/<img/, '<img loading="lazy"');
+                html = html.replace(/<img([^>]*?)>/, '<img$1 style="max-width:100%;height:auto;border-radius:12px;margin:16px 0;" />');
+                return <p key={i} dangerouslySetInnerHTML={{ __html: html }} />;
+              }
+              return <p key={i}>{p}</p>;
+            })}
 
             {section.bullets && (
               <div style={{

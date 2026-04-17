@@ -4,8 +4,27 @@ import Footer from "@/components/Footer";
 import { AdminProvider } from "@/components/AdminProvider";
 
 export const metadata = {
-  title: "sureline — 직장인 건강 가이드",
+  metadataBase: new URL("https://sureline.kr"),
+  title: {
+    default: "sureline — 직장인 건강 가이드",
+    template: "%s | sureline",
+  },
   description: "목·어깨·허리 통증, 눈 피로, 피로 회복까지. 사무직 직장인을 위한 실용 건강 정보.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "sureline",
+    locale: "ko_KR",
+    url: "https://sureline.kr",
+    title: "sureline — 직장인 건강 가이드",
+    description: "목·어깨·허리 통증, 눈 피로, 피로 회복까지. 사무직 직장인을 위한 실용 건강 정보.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "sureline — 직장인 건강 가이드",
+    description: "목·어깨·허리 통증, 눈 피로, 피로 회복까지. 사무직 직장인을 위한 실용 건강 정보.",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }) {
