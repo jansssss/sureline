@@ -37,9 +37,18 @@ export default function Footer() {
     <>
       <footer className="border-t border-gray-200 bg-gray-50 mt-auto py-8">
         <div className="mx-auto max-w-3xl px-4">
-          <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 mb-4">
-            <Link href="/about" className="hover:text-gray-800 transition-colors">소개</Link>
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 mb-2">
+            <Link href="/about" className="hover:text-gray-800 transition-colors">필자 소개</Link>
             <span>·</span>
+            <Link href="/editorial" className="hover:text-gray-800 transition-colors">편집 원칙</Link>
+            <span>·</span>
+            <Link href="/disclaimer" className="hover:text-gray-800 transition-colors">면책 기준</Link>
+            <span>·</span>
+            <Link href="/disclosure" className="hover:text-gray-800 transition-colors">광고 고지</Link>
+            <span>·</span>
+            <Link href="/contact" className="hover:text-gray-800 transition-colors">문의</Link>
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500 mb-4">
             <Link href="/privacy" className="hover:text-gray-800 transition-colors">개인정보처리방침</Link>
             <span>·</span>
             <Link href="/terms" className="hover:text-gray-800 transition-colors">이용약관</Link>
