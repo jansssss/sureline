@@ -64,17 +64,21 @@ export default async function GuidesPage({ searchParams }) {
               >
                 {/* 카테고리 + 날짜 */}
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px", flexWrap: "wrap" }}>
-                  <span style={{
-                    display: "inline-block",
-                    background: "#ff6b57",
-                    color: "#fff",
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    padding: "3px 10px",
-                    borderRadius: "999px",
-                  }}>
+                  <Link
+                    href={`/guides/category/${encodeURIComponent(guide.category)}`}
+                    style={{
+                      display: "inline-block",
+                      background: "#ff6b57",
+                      color: "#fff",
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      padding: "3px 10px",
+                      borderRadius: "999px",
+                      textDecoration: "none",
+                    }}
+                  >
                     {guide.category}
-                  </span>
+                  </Link>
                   <span style={{ fontSize: "12px", color: "#9aa5b8" }}>{formatDate(guide.publishedAt)}</span>
                   <span style={{ fontSize: "12px", color: "#9aa5b8" }}>·</span>
                   <span style={{ fontSize: "12px", color: "#9aa5b8" }}>{guide.readTime} 읽기</span>

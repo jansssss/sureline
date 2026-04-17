@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchGuideBySlug, fetchAdjacentGuides } from "@/lib/supabase-server";
 import PostCTA from "@/components/PostCTA";
+import AuthorBio from "@/components/AuthorBio";
 import AdminEditButton from "@/components/AdminEditButton";
 
 export const dynamic = "force-dynamic";
@@ -159,9 +160,12 @@ export default async function GuideDetailPage({ params }) {
           }}>
             건강 가이드
           </span>
-          <span style={{ color: "#3268ff", fontSize: "13px", fontWeight: 600 }}>
+          <Link
+            href={`/guides/category/${encodeURIComponent(guide.category)}`}
+            style={{ color: "#3268ff", fontSize: "13px", fontWeight: 600, textDecoration: "none" }}
+          >
             {guide.category}
-          </span>
+          </Link>
         </div>
 
         <h1 style={{
@@ -323,6 +327,9 @@ export default async function GuideDetailPage({ params }) {
           </ul>
         </div>
       )}
+
+      {/* 저자 바이오 */}
+      <AuthorBio />
 
       {/* CTA */}
       <PostCTA category={guide.category} slug={guide.slug} />

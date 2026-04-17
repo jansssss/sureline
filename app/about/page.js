@@ -1,8 +1,15 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "소개 — sureline",
-  description: "sureline은 사무직 직장인의 목·어깨·허리 통증, 눈 피로, 만성 피로를 과학적 근거로 해결하는 건강 가이드 사이트입니다.",
+  title: "소개",
+  description: "국내 바이오 특화 기관 10년 이상 재직 R&D 전문가가 운영하는 직장인 건강 가이드. Red·Green·Blue·White Bio 분야 연구 경험과 국내외 컨퍼런스에서 얻은 근거 중심 건강 정보를 전달합니다.",
+  alternates: { canonical: "https://sureline.kr/about" },
+  openGraph: {
+    title: "sureline 소개 — 생명과학 전문가의 직장인 건강 가이드",
+    description: "국내 바이오 특화 기관 10년 이상 재직 R&D 전문가가 운영. 근거 기반 직장인 건강 정보 제공.",
+    url: "https://sureline.kr/about",
+    type: "website",
+  },
 };
 
 export default function AboutPage() {
@@ -57,6 +64,102 @@ export default function AboutPage() {
           >
             가이드 보러 가기 →
           </Link>
+        </div>
+      </section>
+
+      {/* 운영자 소개 */}
+      <section className="bg-white py-16 border-b border-gray-100">
+        <div className="mx-auto max-w-3xl px-4">
+          <div style={{ display: "flex", gap: "32px", alignItems: "flex-start", flexWrap: "wrap" }}>
+
+            {/* 아바타 */}
+            <div style={{ flexShrink: 0 }}>
+              <div style={{
+                width: 96, height: 96, borderRadius: "50%",
+                background: "linear-gradient(135deg, #3268ff 0%, #ff6b57 100%)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 40,
+              }}>
+                🧬
+              </div>
+            </div>
+
+            {/* 텍스트 */}
+            <div style={{ flex: 1, minWidth: 260 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: "#1c2741" }}>sureline 편집장</span>
+                <span style={{
+                  background: "#f4f7ff", color: "#3268ff", fontSize: 12, fontWeight: 700,
+                  padding: "3px 10px", borderRadius: 999, border: "1px solid #dde6ff",
+                }}>
+                  생명과학 전문가
+                </span>
+              </div>
+
+              <p style={{ fontSize: 14, color: "#3268ff", fontWeight: 600, marginBottom: 14 }}>
+                국내 바이오 특화 기관 · 10년 이상 재직 · R&D 연구원
+              </p>
+
+              <p style={{
+                fontSize: 14, color: "#3a4a62", lineHeight: 1.85,
+                wordBreak: "keep-all", marginBottom: 16,
+              }}>
+                국내 주요 바이오 특화 기관에서 10년 이상 현업에 종사하며,
+                <strong> Red Bio(의약·신약 개발), Green Bio(농생명·기능성 소재),
+                Blue Bio(해양 유래 바이오소재), White Bio(산업용 바이오·환경)</strong>
+                전 분야에 걸쳐 R&D 기획·수행과 연구 프로젝트에 참여해 왔습니다.
+              </p>
+
+              <p style={{
+                fontSize: 14, color: "#3a4a62", lineHeight: 1.85,
+                wordBreak: "keep-all", marginBottom: 20,
+              }}>
+                국내외 학술 컨퍼런스 및 전문가 회의에 정기적으로 참석하며 최신 생명과학
+                연구 동향을 직접 파악합니다. 이 과정에서 접하는 근거 중심의 지식을
+                사무직 직장인이 일상에서 실제로 활용할 수 있는 건강 정보로 번역하는 것이
+                sureline의 시작이었습니다.
+              </p>
+
+              {/* 뱃지 */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {[
+                  "🔴 Red Bio · 의약/신약",
+                  "🟢 Green Bio · 농생명",
+                  "🔵 Blue Bio · 해양소재",
+                  "⚪ White Bio · 산업환경",
+                  "📊 R&D 기획·수행",
+                  "🎤 국내외 컨퍼런스",
+                  "📄 학술 연구 참여",
+                ].map((tag) => (
+                  <span key={tag} style={{
+                    background: "#f8f9fb", border: "1px solid #e1e5eb",
+                    borderRadius: 8, padding: "5px 12px",
+                    fontSize: 12, color: "#5a6a85", fontWeight: 600,
+                  }}>{tag}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 인용구 */}
+          <div style={{
+            marginTop: 32, padding: "20px 24px",
+            background: "linear-gradient(135deg, #f4f7ff 0%, #fff5f3 100%)",
+            borderLeft: "4px solid #3268ff", borderRadius: "0 12px 12px 0",
+          }}>
+            <p style={{
+              fontSize: 15, color: "#2a3a5c", lineHeight: 1.85,
+              fontStyle: "italic", wordBreak: "keep-all", margin: 0,
+            }}>
+              "연구 현장에서 쌓은 생명과학 지식이, 정작 책상 앞에 앉아 허리와 목이 아픈
+              직장인에게는 닿지 않는다는 것을 오래 전부터 느꼈습니다.
+              근거는 있지만 어렵게 느껴지는 정보를, 누구나 오늘 바로 적용할 수 있는 형태로
+              전달하는 것 — 그것이 sureline이 존재하는 이유입니다."
+            </p>
+            <div style={{ marginTop: 12, fontSize: 13, color: "#7a8699", fontWeight: 600 }}>
+              — sureline 편집장
+            </div>
+          </div>
         </div>
       </section>
 
