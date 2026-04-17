@@ -35,7 +35,7 @@ export async function PATCH(request, { params }) {
 
   const { slug } = params;
   const body = await request.json();
-  const { title, description, category, keyPoints, sources, sections } = body;
+  const { title, description, category, keyPoints, sources, sections, contentType, seriesId, seriesOrder } = body;
 
   // 1) guides 행의 id 조회
   const idRes = await fetch(
@@ -61,6 +61,9 @@ export async function PATCH(request, { params }) {
         key_points: keyPoints ?? [],
         sources: sources ?? [],
         updated_at: today,
+        content_type: contentType || 'guide',
+        series_id: seriesId ?? null,
+        series_order: seriesOrder ?? null,
       }),
     }
   );

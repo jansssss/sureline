@@ -39,6 +39,9 @@ export async function GET(request, { params }) {
     readTime: g.read_time,
     keyPoints: g.key_points ?? [],
     sources: g.sources ?? [],
+    contentType: g.content_type || 'guide',
+    seriesId: g.series_id ?? null,
+    seriesOrder: g.series_order ?? null,
     sections: secRows.map((s) => ({
       title: s.title,
       paragraphs: s.paragraphs ?? [],

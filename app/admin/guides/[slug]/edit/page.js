@@ -163,6 +163,9 @@ export default function EditPage({ params }) {
         keyPoints: guide.keyPoints,
         sources: guide.sources,
         sections,
+        contentType: guide.contentType,
+        seriesId: guide.seriesId || null,
+        seriesOrder: guide.seriesOrder ? Number(guide.seriesOrder) : null,
       }),
     });
     setSaving(false);
@@ -415,6 +418,43 @@ export default function EditPage({ params }) {
           <Field label="카테고리">
             <input style={inputSt} value={guide.category || ''} onChange={(e) => setGuide((g) => ({ ...g, category: e.target.value }))} />
           </Field>
+
+          <Field label="글 타입">
+            <select
+              style={{ ...inputSt, marginBottom: 0 }}
+              value={guide.contentType || 'guide'}
+              onChange={(e) => setGuide((g) => ({ ...g, contentType: e.target.value }))}
+            >
+              <option value="guide">건강 가이드 (기본)</option>
+              <option value="cornerstone">완전 가이드 (코너스톤)</option>
+              <option value="faq">FAQ</option>
+              <option value="checklist">체크리스트</option>
+              <option value="comparison">비교 분석</option>
+              <option value="research">취재 정리</option>
+            </select>
+          </Field>
+
+          <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px dashed #e1e5eb' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#3268ff', letterSpacing: '.08em', marginBottom: 10 }}>시리즈 연재</div>
+            <Field label="시리즈 ID">
+              <input
+                style={inputSt}
+                type="number"
+                placeholder="없으면 비워두세요"
+                value={guide.seriesId || ''}
+                onChange={(e) => setGuide((g) => ({ ...g, seriesId: e.target.value ? Number(e.target.value) : null }))}
+              />
+            </Field>
+            <Field label="시리즈 순서">
+              <input
+                style={inputSt}
+                type="number"
+                placeholder="1, 2, 3…"
+                value={guide.seriesOrder || ''}
+                onChange={(e) => setGuide((g) => ({ ...g, seriesOrder: e.target.value ? Number(e.target.value) : null }))}
+              />
+            </Field>
+          </div>
 
           <Field label="핵심 요약">
             {(guide.keyPoints || []).map((kp, i) => (
