@@ -127,9 +127,9 @@ export default async function GuideDetailPage({ params }) {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-    <CategorySidebar categories={categories} currentCategory={guide.category} />
-    <div style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
-      <CategorySidebar categories={categories} currentCategory={guide.category} />
+    <CategorySidebar categories={categories} currentCategory={guide.category} variant="mobile" />
+    <div className="cat-layout">
+      <CategorySidebar categories={categories} currentCategory={guide.category} variant="desktop" />
     <article style={{ flex: 1, minWidth: 0 }}>
       <script
         type="application/ld+json"

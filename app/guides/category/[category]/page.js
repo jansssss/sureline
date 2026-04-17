@@ -66,14 +66,10 @@ export default async function CategoryPage({ params }) {
         </div>
       </div>
 
-      {/* 모바일 카테고리 */}
-      <CategorySidebar categories={categories} currentCategory={category} />
+      <CategorySidebar categories={categories} currentCategory={category} variant="mobile" />
 
-      {/* 본문 + 사이드바 */}
-      <div className="mx-auto max-w-5xl px-4 py-6" style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
-        <CategorySidebar categories={categories} currentCategory={category} />
-
-        {/* 글 목록 */}
+      <div className="mx-auto max-w-5xl px-4 py-6 cat-layout">
+        <CategorySidebar categories={categories} currentCategory={category} variant="desktop" />
         <div style={{ flex: 1, minWidth: 0 }}>
         {guides.map((guide, idx) => (
           <article

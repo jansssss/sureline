@@ -48,16 +48,10 @@ export default async function GuidesPage({ searchParams }) {
         </div>
       </div>
 
-      {/* 모바일 카테고리 */}
-      <CategorySidebar categories={categories} currentCategory={null} />
+      <CategorySidebar categories={categories} currentCategory={null} variant="mobile" />
 
-      {/* 본문 + 사이드바 */}
-      <div className="mx-auto max-w-5xl px-4 py-6" style={{ display: "flex", gap: 32, alignItems: "flex-start" }}>
-
-        {/* 데스크톱 사이드바 */}
-        <CategorySidebar categories={categories} currentCategory={null} />
-
-        {/* 글 피드 */}
+      <div className="mx-auto max-w-5xl px-4 py-6 cat-layout">
+        <CategorySidebar categories={categories} currentCategory={null} variant="desktop" />
         <div style={{ flex: 1, minWidth: 0 }}>
         {paged.length > 0 ? (
           <div>

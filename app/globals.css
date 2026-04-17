@@ -111,3 +111,12 @@
 .sureline-source-link:hover {
   text-decoration: underline;
 }
+
+/* CategorySidebar 반응형 */
+.cat-mobile { display: flex; overflow-x: auto; scrollbar-width: none; }
+.cat-desktop { display: none; }
+.cat-layout { display: flex; gap: 32px; align-items: flex-start; }
+@media (min-width: 1024px) {
+  .cat-mobile { display: none; }
+  .cat-desktop { display: block; }
+}
