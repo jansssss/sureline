@@ -5,6 +5,17 @@ import PostCTA from "@/components/PostCTA";
 import AuthorBio from "@/components/AuthorBio";
 import CategorySidebar from "@/components/CategorySidebar";
 import AdminEditButton from "@/components/AdminEditButton";
+import SeriesNav from "@/components/SeriesNav";
+import GuideBody from "@/components/GuideBody";
+
+const TYPE_BADGE = {
+  guide:       { label: "건강 가이드", bg: "#ff6b57" },
+  cornerstone: { label: "완전 가이드", bg: "#1c2741" },
+  faq:         { label: "FAQ",        bg: "#16a34a" },
+  checklist:   { label: "체크리스트",  bg: "#9333ea" },
+  comparison:  { label: "비교 분석",   bg: "#0891b2" },
+  research:    { label: "취재 정리",   bg: "#b45309" },
+};
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -154,19 +165,22 @@ export default async function GuideDetailPage({ params }) {
         </Link>
       </div>
 
-      {/* 헤더 — Blogger 스타일 */}
+      {/* 시리즈 내비게이션 */}
+      <SeriesNav series={guide.series} seriesGuides={guide.seriesGuides} currentSlug={guide.slug} />
+
+      {/* 헤더 */}
       <header style={{ borderTop: "4px solid #ff6b57", padding: "32px 0 24px", wordBreak: "keep-all" }}>
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <span style={{
             display: "inline-block",
-            background: "#ff6b57",
+            background: (TYPE_BADGE[guide.contentType] ?? TYPE_BADGE.guide).bg,
             color: "#fff",
             fontSize: "13px",
             fontWeight: 700,
             padding: "4px 12px",
             borderRadius: "999px",
           }}>
-            건강 가이드
+            {(TYPE_BADGE[guide.contentType] ?? TYPE_BADGE.guide).label}
           </span>
           <Link
             href={`/guides/category/${encodeURIComponent(guide.category)}`}
@@ -231,83 +245,8 @@ export default async function GuideDetailPage({ params }) {
         </div>
       )}
 
-      {/* 본문 — Blogger h2/paragraph/callout 스타일 */}
-      <div className="sureline-prose">
-        {guide.sections && guide.sections.map((section, idx) => (
-          <section key={idx}>
-            <h2>{section.title}</h2>
-
-            {section.paragraphs.map((p, i) => {
-              if (typeof p === 'string' && p.startsWith('<img')) {
-                let html = p;
-                if (!/\salt=/.test(html)) html = html.replace(/<img/, `<img alt="${guide.title.replace(/"/g, '&quot;')}"`);
-                if (!/loading=/.test(html)) html = html.replace(/<img/, '<img loading="lazy"');
-                html = html.replace(/<img([^>]*?)>/, '<img$1 style="max-width:100%;height:auto;border-radius:12px;margin:16px 0;" />');
-                return <p key={i} dangerouslySetInnerHTML={{ __html: html }} />;
-              }
-              return <p key={i}>{p}</p>;
-            })}
-
-            {section.bullets && (
-              <div style={{
-                background: "#f8f9fb",
-                border: "1px solid #e1e5eb",
-                borderRadius: "12px",
-                padding: "16px 18px",
-                margin: "16px 0",
-              }}>
-                <ul>
-                  {section.bullets.map((b, i) => (
-                    <li key={i}>{b}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {section.table && (
-              <div className="my-4 overflow-x-auto" style={{ borderRadius: "12px", border: "1px solid #dde6ff" }}>
-                <table>
-                  <thead>
-                    <tr>
-                      {section.table.headers.map((h, i) => (
-                        <th key={i}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.table.rows.map((row, i) => (
-                      <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#f8f9fb" }}>
-                        {row.map((cell, j) => (
-                          <td key={j} style={j === 0 ? { fontWeight: 600, color: "#1c2741" } : {}}>
-                            {cell}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {section.callout && (
-              <div style={{
-                background: "#f0f4ff",
-                borderLeft: "4px solid #3268ff",
-                borderRadius: "0 8px 8px 0",
-                padding: "14px 18px",
-                margin: "4px 0 20px",
-              }}>
-                <div style={{ fontSize: "12px", fontWeight: 700, color: "#3268ff", marginBottom: "6px", letterSpacing: "0.04em" }}>
-                  전문가 인사이트
-                </div>
-                <p style={{ fontSize: "15px", color: "#2a3a5c", margin: 0, lineHeight: 1.75, wordBreak: "keep-all" }}>
-                  {section.callout}
-                </p>
-              </div>
-            )}
-          </section>
-        ))}
-      </div>
+      {/* 본문 — 타입별 렌더링 */}
+      <GuideBody guide={guide} />
 
       {/* 출처 — Blogger 스타일 */}
       {guide.sources && guide.sources.length > 0 && (

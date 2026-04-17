@@ -7,6 +7,15 @@ export const dynamic = "force-dynamic";
 
 const SITE_URL = "https://sureline.kr";
 
+const TYPE_BADGE = {
+  guide:       { label: "건강 가이드", bg: "#ff6b57" },
+  cornerstone: { label: "완전 가이드", bg: "#1c2741" },
+  faq:         { label: "FAQ",        bg: "#16a34a" },
+  checklist:   { label: "체크리스트",  bg: "#9333ea" },
+  comparison:  { label: "비교 분석",   bg: "#0891b2" },
+  research:    { label: "취재 정리",   bg: "#b45309" },
+};
+
 function formatDate(dateStr) {
   if (!dateStr) return "";
   const [year, month, day] = dateStr.slice(0, 10).split("-");
@@ -83,6 +92,15 @@ export default async function CategoryPage({ params }) {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+              {guide.contentType && guide.contentType !== "guide" && (
+                <span style={{
+                  background: (TYPE_BADGE[guide.contentType] ?? TYPE_BADGE.guide).bg,
+                  color: "#fff", fontSize: "11px", fontWeight: 700,
+                  padding: "3px 10px", borderRadius: "999px",
+                }}>
+                  {(TYPE_BADGE[guide.contentType] ?? TYPE_BADGE.guide).label}
+                </span>
+              )}
               <span style={{ fontSize: 12, color: "#9aa5b8" }}>{formatDate(guide.publishedAt)}</span>
               <span style={{ fontSize: 12, color: "#9aa5b8" }}>·</span>
               <span style={{ fontSize: 12, color: "#9aa5b8" }}>{guide.readTime} 읽기</span>
