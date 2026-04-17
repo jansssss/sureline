@@ -11,7 +11,16 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Read(//f/개인/tesla/tesla-quote-app/**)",
-      "Read(//f/개인/tesla/tesla-quote-app/scripts/**)"
+      "Read(//f/개인/tesla/tesla-quote-app/scripts/**)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/evolve.py''\\).read\\(\\)\\); print\\(''evolve.py OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/analytics/gsc_collector.py''\\).read\\(\\)\\); print\\(''gsc_collector.py OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/analytics/analyzer.py''\\).read\\(\\)\\); print\\(''analyzer.py OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/analytics/prompt_evolver.py''\\).read\\(\\)\\); print\\(''prompt_evolver.py OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/analytics/reporter.py''\\).read\\(\\)\\); print\\(''reporter.py OK''\\)\")",
+      "Bash(python -c \":*)",
+      "Bash(python scripts/sim_cta.py)",
+      "Bash(mkdir -p \"f:/개인/sureline/app/api/admin/auth\")",
+      "Bash(mkdir -p \"f:/개인/sureline/app/api/admin/guides/[slug]\")"
     ]
   }
 }

@@ -1,0 +1,27 @@
+name: Cleanup Guides (1회성)
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-run (삭제 목록만 확인, 실제 삭제 안 함)"
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run cleanup
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: python scripts/cleanup_guides.py
