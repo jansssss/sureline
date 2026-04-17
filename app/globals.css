@@ -120,3 +120,9 @@
   .cat-mobile { display: none; }
   .cat-desktop { display: block; }
 }
+
+/* myth 오해/사실 분할 그리드 */
+.myth-grid { display: grid; grid-template-columns: 1fr; }
+@media (min-width: 640px) {
+  .myth-grid { grid-template-columns: 1fr 1fr; }
+}
