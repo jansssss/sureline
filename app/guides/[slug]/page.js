@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchGuideBySlug, fetchAdjacentGuides, fetchAllCategories } from "@/lib/supabase-server";
+import { getGuideBySlug as getLocalGuide } from "@/lib/guides";
 import PostCTA from "@/components/PostCTA";
 import AuthorBio from "@/components/AuthorBio";
 import CategorySidebar from "@/components/CategorySidebar";
@@ -57,7 +58,7 @@ function extractBodyText(sections) {
 }
 
 export async function generateMetadata({ params }) {
-  const guide = await fetchGuideBySlug(params.slug);
+  const guide = getLocalGuide(params.slug) ?? await fetchGuideBySlug(params.slug);
   if (!guide) return { title: "글을 찾을 수 없습니다" };
 
   const url = `${SITE_URL}/guides/${guide.slug}`;
@@ -90,12 +91,13 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function GuideDetailPage({ params }) {
-  const guide = await fetchGuideBySlug(params.slug);
+  const localGuide = getLocalGuide(params.slug);
+  const guide = localGuide ?? await fetchGuideBySlug(params.slug);
 
   if (!guide) notFound();
 
   const [{ prev, next }, categories] = await Promise.all([
-    fetchAdjacentGuides(params.slug, guide.publishedAt),
+    localGuide ? Promise.resolve({ prev: null, next: null }) : fetchAdjacentGuides(params.slug, guide.publishedAt),
     fetchAllCategories(),
   ]);
 
