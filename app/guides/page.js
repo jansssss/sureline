@@ -1,8 +1,17 @@
 import Link from "next/link";
 import { fetchAllGuides, fetchAllCategories } from "@/lib/supabase-server";
+import { getAllGuides as getLocalGuides } from "@/lib/guides";
 import CategorySidebar from "@/components/CategorySidebar";
 
 export const dynamic = "force-dynamic";
+
+function mergeGuides(remoteGuides, localGuides) {
+  const slugSet = new Set(remoteGuides.map((g) => g.slug));
+  const extras = localGuides.filter((g) => !slugSet.has(g.slug));
+  return [...remoteGuides, ...extras].sort(
+    (a, b) => new Date(b.publishedAt || b.updatedAt).getTime() - new Date(a.publishedAt || a.updatedAt).getTime()
+  );
+}
 
 const SITE_URL = "https://sureline.kr";
 
@@ -41,7 +50,8 @@ function formatDate(dateStr) {
 }
 
 export default async function GuidesPage({ searchParams }) {
-  const [guides, categories] = await Promise.all([fetchAllGuides(200), fetchAllCategories()]);
+  const [remoteGuides, categories] = await Promise.all([fetchAllGuides(200), fetchAllCategories()]);
+  const guides = mergeGuides(remoteGuides, getLocalGuides());
   const totalPages = Math.ceil(guides.length / PAGE_SIZE);
   const currentPage = Math.min(Math.max(Number(searchParams?.page) || 1, 1), totalPages || 1);
   const paged = guides.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
