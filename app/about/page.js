@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "필자 소개 | sureline",
-  description: "sureline을 운영하는 김서연 — 직업 건강 취재 8년, 정형외과·산업의학 전문의 100명 이상 인터뷰한 전문 취재작가의 이야기.",
+  title: "사이트 소개 | sureline",
+  description: "sureline은 직장인이 겪는 근골격계 통증·피로 문제를 다루는 건강 정보 사이트입니다. 학회자료·공공기관 기준을 바탕으로 실용적인 정보를 제공합니다.",
   alternates: { canonical: "https://sureline.kr/about" },
   openGraph: {
-    title: "필자 소개 | sureline",
-    description: "직업 건강 취재 8년차 김서연이 운영하는 직장인 건강 가이드.",
+    title: "사이트 소개 | sureline",
+    description: "직장인 근골격계 통증·피로 정보 사이트 sureline 소개.",
     url: "https://sureline.kr/about",
     type: "website",
   },
@@ -19,135 +19,75 @@ export default function AboutPage() {
       <div style={{ borderTop: "4px solid #3268ff", background: "#f4f7ff", padding: "32px 0 24px" }}>
         <div className="mx-auto max-w-3xl px-4">
           <p style={{ fontSize: 13, color: "#9aa5b8", marginBottom: 6 }}>sureline</p>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#1c2741", marginBottom: 8 }}>필자 소개</h1>
-          <p style={{ fontSize: 14, color: "#5a6a85", lineHeight: 1.7 }}>이 블로그를 만드는 사람과 만드는 방식에 대해 솔직하게 씁니다.</p>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#1c2741", marginBottom: 8 }}>사이트 소개</h1>
+          <p style={{ fontSize: 14, color: "#5a6a85", lineHeight: 1.7 }}>sureline이 무엇을 하는 곳인지, 어떤 기준으로 글을 쓰는지 설명합니다.</p>
         </div>
       </div>
 
       <div className="mx-auto max-w-3xl px-4 py-12">
 
-        {/* 운영자 카드 */}
+        {/* 사이트 소개 */}
         <section style={{ background: "#fff", border: "1px solid #e1e5eb", borderRadius: 16, padding: "32px 28px", marginBottom: 40 }}>
-          <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
-            <div style={{
-              width: 72, height: 72, borderRadius: "50%", flexShrink: 0,
-              background: "linear-gradient(135deg, #3268ff 0%, #ff6b57 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 30,
-            }}>
-              ✍️
-            </div>
-            <div style={{ flex: 1, minWidth: 220 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 18, fontWeight: 800, color: "#1c2741" }}>김서연</span>
-                <span style={{
-                  background: "#f4f7ff", color: "#3268ff",
-                  fontSize: 12, fontWeight: 700,
-                  padding: "3px 10px", borderRadius: 999, border: "1px solid #dde6ff",
-                }}>
-                  직업 건강 전문 취재작가
-                </span>
-              </div>
-              <p style={{ fontSize: 13, color: "#3268ff", fontWeight: 600, marginBottom: 12 }}>
-                직업 건강·근골격계·피로 분야 취재 8년 이상 | sureline 운영자
-              </p>
-              <p style={{ fontSize: 14, color: "#3a4a62", lineHeight: 1.85, wordBreak: "keep-all", margin: 0 }}>
-                복잡한 의학 자료를 직장인이 바로 쓸 수 있는 언어로 정리하는 일을 8년 이상 해왔습니다.
-                정형외과·산업의학 전문의, 물리치료사, 작업환경 전문가를 직접 인터뷰하고
-                학술 자료와 실제 임상 사이의 간극을 메우는 글을 씁니다.
-              </p>
-            </div>
-          </div>
+          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 16 }}>sureline은 어떤 사이트인가요</h2>
+          <p style={{ fontSize: 15, color: "#3a4a62", lineHeight: 1.9, wordBreak: "keep-all", marginBottom: 16 }}>
+            sureline은 직장인이 겪는 근골격계 통증·피로 문제를 다루는 건강 정보 사이트입니다.
+            목 통증, 허리 통증, 손목·어깨 부담, 눈 피로 등 업무 환경에서 자주 생기는 문제들을 다룹니다.
+          </p>
+          <p style={{ fontSize: 15, color: "#3a4a62", lineHeight: 1.9, wordBreak: "keep-all", margin: 0 }}>
+            인터넷에 건강 정보가 넘쳐나지만, 논문 수준으로 전문적이거나 반대로 근거가 불분명한 경우가 많습니다.
+            sureline은 그 사이에서 <strong>직장인이 오늘 당장 활용할 수 있는 정보</strong>를 공신력 있는 자료 기반으로 제공합니다.
+          </p>
         </section>
 
-        {/* 경력 하이라이트 */}
+        {/* 운영 목적 */}
         <section style={{ background: "#f8f9fb", borderRadius: 16, padding: "28px 28px", marginBottom: 40 }}>
-          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 16 }}>경력 하이라이트</h2>
+          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 16 }}>운영 목적</h2>
           <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
             {[
-              "직업 건강·산업의학 분야 전문 기자 8년 (의료·건강 전문 매체)",
-              "정형외과·재활의학·산업의학 전문의 100명 이상 인터뷰",
-              "산업안전보건공단, 근로복지공단, 대한산업의학회 공식 자료 분석·정리",
-              "IT·금융·제조 업종 300인 이상 직장인 설문조사 기반 콘텐츠 다수 집필",
-              "MSD(근골격계 질환) 예방 교육 자료 기업 납품 경험",
-            ].map((item) => (
-              <li key={item} style={{ fontSize: 14, color: "#3a4a62", lineHeight: 1.8, marginBottom: 10, display: "flex", gap: 8 }}>
+              { title: "맥락 있는 정보 제공", desc: "단순 증상 나열이 아니라, 원인·악화 요인·대응 방법·병원 기준을 함께 다룹니다." },
+              { title: "과장 없는 서술", desc: "'이것만 하면 낫는다'는 표현 대신, 개인차를 인정하고 근거가 충분하지 않은 내용은 그렇다고 밝힙니다." },
+              { title: "불필요한 병원 공포 줄이기", desc: "잘못된 정보로 인한 과도한 걱정을 줄이고, 실제로 전문의 진료가 필요한 기준을 명확히 안내합니다." },
+            ].map(({ title, desc }) => (
+              <li key={title} style={{ fontSize: 14, color: "#3a4a62", lineHeight: 1.8, marginBottom: 12, display: "flex", gap: 8 }}>
                 <span style={{ color: "#3268ff", flexShrink: 0, fontWeight: 700 }}>▸</span>
-                <span>{item}</span>
+                <span><strong>{title}</strong> — {desc}</span>
               </li>
             ))}
           </ul>
         </section>
 
-        {/* 왜 이 블로그를 시작했나 */}
-        <section style={{ marginBottom: 40 }}>
-          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 16 }}>왜 이 블로그를 시작했나</h2>
-          <div style={{ fontSize: 15, color: "#3a4a62", lineHeight: 1.9, wordBreak: "keep-all" }}>
-            <p style={{ marginBottom: 16 }}>
-              취재를 오래 하다 보면 전문의가 하는 말과 인터넷에 돌아다니는 건강 정보 사이에
-              얼마나 큰 차이가 있는지 보입니다. 둘 다 맞는 말이지만 맥락이 다른 경우가 대부분입니다.
-            </p>
-            <p style={{ marginBottom: 16 }}>
-              IT 회사에 다니는 친구가 "목 디스크"라는 말을 들은 후, 인터넷에서 찾은 정보를 보며
-              당장 수술이라도 해야 할 것 같다고 걱정했습니다. 제가 직접 산업의학 전문의에게 물어보고
-              나서야 그 친구는 생활 자세 교정으로 충분하다는 걸 알았습니다.
-            </p>
-            <p style={{ marginBottom: 16 }}>
-              직장인에게 필요한 건 논문 수준의 정밀도가 아닙니다.
-              &ldquo;지금 내 상황에서 오늘 당장 할 수 있는 게 뭔지&rdquo;를 알고 싶은 사람에게
-              실제로 도움이 되는 정보를 쓰고 싶었습니다.
-            </p>
-            <p style={{ margin: 0 }}>
-              sureline은 그 목적 하나로 운영됩니다.
-            </p>
-          </div>
-        </section>
-
-        {/* 주로 참고하는 자료 */}
-        <section style={{ background: "#f8f9fb", borderRadius: 16, padding: "28px 28px", marginBottom: 40 }}>
-          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 16 }}>주로 참고하는 자료</h2>
-          <ul style={{ margin: 0, paddingLeft: 20 }}>
+        {/* 콘텐츠 작성 기준 */}
+        <section style={{ background: "#fff", border: "1px solid #e1e5eb", borderRadius: 16, padding: "28px 28px", marginBottom: 40 }}>
+          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 16 }}>콘텐츠 작성 기준</h2>
+          <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
             {[
-              "대한정형외과학회, 대한재활의학회, 대한산업의학회 자료",
-              "미국 CDC·NIOSH, 유럽 직업건강연구기관 발행 자료",
-              "정형외과·물리치료 분야 국내외 학술지 (Spine, JOSPT 등)",
-              "전문의·물리치료사 직접 인터뷰 내용",
-              "고용노동부, 산업안전보건공단 가이드라인",
-            ].map((item) => (
-              <li key={item} style={{ fontSize: 14, color: "#3a4a62", lineHeight: 1.8, marginBottom: 4 }}>{item}</li>
+              { title: "학회·공공기관 자료 우선", desc: "대한정형외과학회, 대한재활의학회, 고용노동부, 산업안전보건공단, CDC·NIOSH 등 공신력 있는 기관의 자료와 학술지를 근거로 합니다." },
+              { title: "원인 → 악화 요인 → 대응 → 병원 기준 구조", desc: "모든 글은 증상의 원인, 상황을 악화시키는 요인, 생활 속 대응법, 전문의 진료가 필요한 기준을 함께 다룹니다." },
+              { title: "업데이트 기준 표기", desc: "가이드라인이 바뀌거나 새로운 연구 결과가 나오면 업데이트 일자와 함께 내용을 수정합니다." },
+              { title: "오류 제보 환영", desc: "잘못된 정보나 개선이 필요한 내용을 발견하시면 언제든지 연락 주세요. 확인 후 수정합니다." },
+            ].map(({ title, desc }) => (
+              <li key={title} style={{ fontSize: 14, color: "#3a4a62", lineHeight: 1.8, marginBottom: 12, display: "flex", gap: 8 }}>
+                <span style={{ color: "#3268ff", flexShrink: 0, fontWeight: 700 }}>•</span>
+                <span><strong>{title}</strong> — {desc}</span>
+              </li>
             ))}
           </ul>
-        </section>
-
-        {/* 한계 */}
-        <section style={{ marginBottom: 40 }}>
-          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 16 }}>이 블로그의 한계</h2>
-          <div style={{
-            background: "#fffbef", border: "1px solid #f0e08a",
-            borderRadius: 12, padding: "20px 24px",
-          }}>
-            <p style={{ fontSize: 14, color: "#6b5b1a", lineHeight: 1.85, wordBreak: "keep-all", margin: 0 }}>
-              이 블로그는 취재 기반의 일반 건강 정보를 제공하는 곳입니다.
-              필자는 의사가 아니며, 개인의 증상에 대한 진단이나 처방을 할 수 없습니다.
-              글의 내용은 일반적인 상황을 기준으로 쓰며, 개인 상태에 따라 적합하지 않을 수 있습니다.
-              통증이 심하거나 지속된다면 반드시 전문의 진료를 받으시기 바랍니다.
-            </p>
+          <div style={{ marginTop: 20, background: "#f8f9fb", borderRadius: 10, padding: "16px 20px", fontSize: 13, color: "#5a6a85" }}>
+            <div><strong>운영:</strong> sureline</div>
+            <div><strong>연락처:</strong> goooods@naver.com</div>
           </div>
         </section>
 
-        {/* 인용구 */}
-        <section style={{
-          borderLeft: "4px solid #3268ff",
-          background: "linear-gradient(135deg, #f4f7ff 0%, #fff5f3 100%)",
-          borderRadius: "0 12px 12px 0",
-          padding: "20px 24px", marginBottom: 40,
-        }}>
-          <p style={{ fontSize: 15, color: "#2a3a5c", lineHeight: 1.85, fontStyle: "italic", wordBreak: "keep-all", margin: "0 0 12px" }}>
-            &ldquo;전문의에게 직접 들은 이야기와 논문에 나온 내용이 왜 이렇게 다른지,
-            취재를 시작하고 나서야 알았습니다. 둘 다 맞지만 맥락이 다릅니다.
-            그 맥락을 제대로 전달하는 것 — 그게 sureline이 하려는 일입니다.&rdquo;
+        {/* 면책 */}
+        <section style={{ background: "#fffbef", border: "1px solid #f0e08a", borderRadius: 16, padding: "24px 28px", marginBottom: 40 }}>
+          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#6b5b1a", marginBottom: 12 }}>면책 사항</h2>
+          <p style={{ fontSize: 14, color: "#6b5b1a", lineHeight: 1.85, wordBreak: "keep-all", margin: "0 0 12px" }}>
+            이 사이트에서 제공하는 정보는 <strong>일반적인 건강 정보</strong>로, 개인의 증상에 대한 진단이나 처방이 아닙니다.
+            통증이 심하거나 지속된다면 반드시 전문의 진료를 받으시기 바랍니다.
           </p>
-          <div style={{ fontSize: 13, color: "#7a8699", fontWeight: 600 }}>— 김서연, sureline 운영자</div>
+          <Link href="/disclaimer" style={{ fontSize: 13, fontWeight: 600, color: "#9b7a0a", textDecoration: "underline" }}>
+            건강 정보 면책 기준 전문 →
+          </Link>
         </section>
 
         {/* 관련 페이지 링크 */}

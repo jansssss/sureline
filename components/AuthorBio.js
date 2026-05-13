@@ -15,7 +15,7 @@ export default function AuthorBio() {
         flexWrap: "wrap",
       }}
     >
-      {/* 아바타 */}
+      {/* 아이콘 */}
       <div
         style={{
           width: 64,
@@ -35,7 +35,7 @@ export default function AuthorBio() {
       {/* 텍스트 */}
       <div style={{ flex: 1, minWidth: 220 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 15, fontWeight: 800, color: "#1c2741" }}>김서연</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: "#1c2741" }}>sureline</span>
           <span
             style={{
               background: "#f4f7ff",
@@ -47,7 +47,7 @@ export default function AuthorBio() {
               border: "1px solid #dde6ff",
             }}
           >
-            직업 건강 전문 취재작가
+            직장인 건강 정보
           </span>
         </div>
 
@@ -60,12 +60,12 @@ export default function AuthorBio() {
             margin: "0 0 12px",
           }}
         >
-          직업 건강·근골격계·피로 분야 취재 8년. 정형외과·산업의학 전문의 100명 이상 인터뷰.
-          학술 자료와 현장 전문가 경험을 직장인이 바로 활용할 수 있는 언어로 전달합니다.
+          학회·공공기관 자료와 전문의 자문을 바탕으로 직장인이 바로 활용할 수 있는
+          근골격계 통증·피로 정보를 제공합니다.
         </p>
 
         <Link
-          href="/about"
+          href="/editorial"
           style={{
             fontSize: 13,
             fontWeight: 600,
@@ -73,7 +73,7 @@ export default function AuthorBio() {
             textDecoration: "none",
           }}
         >
-          편집장 소개 보기 →
+          편집 원칙 보기 →
         </Link>
       </div>
     </aside>

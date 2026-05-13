@@ -132,16 +132,15 @@ export default function EditorialPage() {
           </div>
         </section>
 
-        {/* 필자 소개 카드 */}
+        {/* 운영 소개 카드 */}
         <section style={{ background: "#f4f7ff", border: "1px solid #dde6ff", borderRadius: 16, padding: "24px 28px", marginBottom: 40 }}>
-          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 12 }}>이 글을 쓰는 사람</h2>
+          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 12 }}>이 사이트에 대해</h2>
           <p style={{ fontSize: 14, color: "#3a4a62", lineHeight: 1.85, wordBreak: "keep-all", margin: "0 0 12px" }}>
-            <strong>김서연</strong> — 직업 건강·근골격계·피로 분야 전문 취재작가. 8년 이상 의료·건강 전문 매체에서 일하며
-            정형외과·산업의학 전문의, 물리치료사, 작업환경 전문가를 직접 인터뷰해 왔습니다.
-            sureline의 모든 글은 같은 기준으로 작성됩니다.
+            sureline은 직장인이 겪는 근골격계 통증·피로 문제를 다루는 건강 정보 사이트입니다.
+            학회·공공기관 자료와 전문의 자문을 바탕으로 작성하며, 위 편집 원칙은 모든 글에 동일하게 적용됩니다.
           </p>
           <Link href="/about" style={{ fontSize: 13, fontWeight: 700, color: "#3268ff", textDecoration: "none" }}>
-            필자 상세 소개 →
+            사이트 상세 소개 →
           </Link>
         </section>
 
