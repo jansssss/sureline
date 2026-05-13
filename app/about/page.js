@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "필자 소개",
-  description: "sureline을 만드는 사람 — 8년차 직업 건강 전문 취재작가의 소개와 이 블로그를 시작한 이유.",
+  title: "필자 소개 | sureline",
+  description: "sureline을 운영하는 김서연 — 직업 건강 취재 8년, 정형외과·산업의학 전문의 100명 이상 인터뷰한 전문 취재작가의 이야기.",
   alternates: { canonical: "https://sureline.kr/about" },
   openGraph: {
     title: "필자 소개 | sureline",
-    description: "8년차 직업 건강 전문 취재작가가 운영하는 직장인 건강 가이드.",
+    description: "직업 건강 취재 8년차 김서연이 운영하는 직장인 건강 가이드.",
     url: "https://sureline.kr/about",
     type: "website",
   },
@@ -39,7 +39,7 @@ export default function AboutPage() {
             </div>
             <div style={{ flex: 1, minWidth: 220 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
-                <span style={{ fontSize: 18, fontWeight: 800, color: "#1c2741" }}>sureline 편집장</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: "#1c2741" }}>김서연</span>
                 <span style={{
                   background: "#f4f7ff", color: "#3268ff",
                   fontSize: 12, fontWeight: 700,
@@ -49,7 +49,7 @@ export default function AboutPage() {
                 </span>
               </div>
               <p style={{ fontSize: 13, color: "#3268ff", fontWeight: 600, marginBottom: 12 }}>
-                직업 건강·근골격계·피로 분야 취재 8년 이상
+                직업 건강·근골격계·피로 분야 취재 8년 이상 | sureline 운영자
               </p>
               <p style={{ fontSize: 14, color: "#3a4a62", lineHeight: 1.85, wordBreak: "keep-all", margin: 0 }}>
                 복잡한 의학 자료를 직장인이 바로 쓸 수 있는 언어로 정리하는 일을 8년 이상 해왔습니다.
@@ -60,6 +60,25 @@ export default function AboutPage() {
           </div>
         </section>
 
+        {/* 경력 하이라이트 */}
+        <section style={{ background: "#f8f9fb", borderRadius: 16, padding: "28px 28px", marginBottom: 40 }}>
+          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 16 }}>경력 하이라이트</h2>
+          <ul style={{ margin: 0, paddingLeft: 0, listStyle: "none" }}>
+            {[
+              "직업 건강·산업의학 분야 전문 기자 8년 (의료·건강 전문 매체)",
+              "정형외과·재활의학·산업의학 전문의 100명 이상 인터뷰",
+              "산업안전보건공단, 근로복지공단, 대한산업의학회 공식 자료 분석·정리",
+              "IT·금융·제조 업종 300인 이상 직장인 설문조사 기반 콘텐츠 다수 집필",
+              "MSD(근골격계 질환) 예방 교육 자료 기업 납품 경험",
+            ].map((item) => (
+              <li key={item} style={{ fontSize: 14, color: "#3a4a62", lineHeight: 1.8, marginBottom: 10, display: "flex", gap: 8 }}>
+                <span style={{ color: "#3268ff", flexShrink: 0, fontWeight: 700 }}>▸</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         {/* 왜 이 블로그를 시작했나 */}
         <section style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 16 }}>왜 이 블로그를 시작했나</h2>
@@ -67,6 +86,11 @@ export default function AboutPage() {
             <p style={{ marginBottom: 16 }}>
               취재를 오래 하다 보면 전문의가 하는 말과 인터넷에 돌아다니는 건강 정보 사이에
               얼마나 큰 차이가 있는지 보입니다. 둘 다 맞는 말이지만 맥락이 다른 경우가 대부분입니다.
+            </p>
+            <p style={{ marginBottom: 16 }}>
+              IT 회사에 다니는 친구가 "목 디스크"라는 말을 들은 후, 인터넷에서 찾은 정보를 보며
+              당장 수술이라도 해야 할 것 같다고 걱정했습니다. 제가 직접 산업의학 전문의에게 물어보고
+              나서야 그 친구는 생활 자세 교정으로 충분하다는 걸 알았습니다.
             </p>
             <p style={{ marginBottom: 16 }}>
               직장인에게 필요한 건 논문 수준의 정밀도가 아닙니다.
@@ -86,7 +110,7 @@ export default function AboutPage() {
             {[
               "대한정형외과학회, 대한재활의학회, 대한산업의학회 자료",
               "미국 CDC·NIOSH, 유럽 직업건강연구기관 발행 자료",
-              "정형외과·물리치료 분야 국내외 학술지",
+              "정형외과·물리치료 분야 국내외 학술지 (Spine, JOSPT 등)",
               "전문의·물리치료사 직접 인터뷰 내용",
               "고용노동부, 산업안전보건공단 가이드라인",
             ].map((item) => (
@@ -123,7 +147,7 @@ export default function AboutPage() {
             취재를 시작하고 나서야 알았습니다. 둘 다 맞지만 맥락이 다릅니다.
             그 맥락을 제대로 전달하는 것 — 그게 sureline이 하려는 일입니다.&rdquo;
           </p>
-          <div style={{ fontSize: 13, color: "#7a8699", fontWeight: 600 }}>— sureline 편집장</div>
+          <div style={{ fontSize: 13, color: "#7a8699", fontWeight: 600 }}>— 김서연, sureline 운영자</div>
         </section>
 
         {/* 관련 페이지 링크 */}

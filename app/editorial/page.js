@@ -103,6 +103,48 @@ export default function EditorialPage() {
           </ul>
         </section>
 
+        {/* 콘텐츠 검증 프로세스 */}
+        <section style={{ background: "#fff", border: "1px solid #e1e5eb", borderRadius: 16, padding: "28px 28px", marginBottom: 40 }}>
+          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 16 }}>콘텐츠 검증 프로세스</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {[
+              { step: "1", label: "초안 작성", desc: "학회 자료·논문·가이드라인을 기반으로 핵심 사실 정리" },
+              { step: "2", label: "전문가 교차 확인", desc: "취재 인터뷰 메모 또는 전문의 자문을 통해 오류·과장 점검" },
+              { step: "3", label: "실용성 편집", desc: "직장인이 '지금 당장 적용 가능한가'를 기준으로 서술 방식 수정" },
+              { step: "4", label: "면책 기준 적용", desc: "의료 행위를 암시하는 표현, 진단·처방 내용이 있으면 제거 또는 수정" },
+            ].map(({ step, label, desc }) => (
+              <div key={step} style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: "50%",
+                  background: "#3268ff", color: "#fff",
+                  fontSize: 12, fontWeight: 800,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0, marginTop: 1,
+                }}>
+                  {step}
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#1c2741", marginBottom: 4 }}>{label}</div>
+                  <div style={{ fontSize: 13, color: "#5a6a85", lineHeight: 1.7 }}>{desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 필자 소개 카드 */}
+        <section style={{ background: "#f4f7ff", border: "1px solid #dde6ff", borderRadius: 16, padding: "24px 28px", marginBottom: 40 }}>
+          <h2 style={{ fontSize: "1.125rem", fontWeight: 800, color: "#1c2741", marginBottom: 12 }}>이 글을 쓰는 사람</h2>
+          <p style={{ fontSize: 14, color: "#3a4a62", lineHeight: 1.85, wordBreak: "keep-all", margin: "0 0 12px" }}>
+            <strong>김서연</strong> — 직업 건강·근골격계·피로 분야 전문 취재작가. 8년 이상 의료·건강 전문 매체에서 일하며
+            정형외과·산업의학 전문의, 물리치료사, 작업환경 전문가를 직접 인터뷰해 왔습니다.
+            sureline의 모든 글은 같은 기준으로 작성됩니다.
+          </p>
+          <Link href="/about" style={{ fontSize: 13, fontWeight: 700, color: "#3268ff", textDecoration: "none" }}>
+            필자 상세 소개 →
+          </Link>
+        </section>
+
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Link href="/about" style={{ fontSize: 14, fontWeight: 600, color: "#3268ff", textDecoration: "none" }}>필자 소개 →</Link>
           <Link href="/disclaimer" style={{ fontSize: 14, fontWeight: 600, color: "#3268ff", textDecoration: "none" }}>건강 정보 면책 기준 →</Link>

@@ -35,7 +35,7 @@ export default function AuthorBio() {
       {/* 텍스트 */}
       <div style={{ flex: 1, minWidth: 220 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 15, fontWeight: 800, color: "#1c2741" }}>sureline 편집장</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: "#1c2741" }}>김서연</span>
           <span
             style={{
               background: "#f4f7ff",
@@ -60,9 +60,8 @@ export default function AuthorBio() {
             margin: "0 0 12px",
           }}
         >
-          8년 이상 직업 건강·근골격계·피로 분야를 전문으로 취재해 왔습니다.
-          정형외과·산업의학 전문의, 물리치료사 등 현장 전문가와의 인터뷰를 통해
-          검증된 정보만을 직장인 눈높이에 맞게 풀어 전달합니다.
+          직업 건강·근골격계·피로 분야 취재 8년. 정형외과·산업의학 전문의 100명 이상 인터뷰.
+          학술 자료와 현장 전문가 경험을 직장인이 바로 활용할 수 있는 언어로 전달합니다.
         </p>
 
         <Link
