@@ -19,6 +19,8 @@ export default function AdminGuidesPage() {
   const [msg, setMsg] = useState('');
   const [page, setPage] = useState(1);
   const [authChecked, setAuthChecked] = useState(false);
+  const [selected, setSelected] = useState(new Set());
+  const [deleting, setDeleting] = useState(false);
   const PAGE_SIZE = 20;
 
   useEffect(() => {
@@ -62,6 +64,38 @@ export default function AdminGuidesPage() {
     setTogglingSlug(null);
   }, []);
 
+  const handleDelete = useCallback(async () => {
+    if (selected.size === 0) return;
+    if (!window.confirm(`선택한 ${selected.size}개 글을 삭제할까요?\n삭제 후 복구할 수 없습니다.`)) return;
+    setDeleting(true);
+    const t = localStorage.getItem('admin_token');
+    await Promise.all(
+      [...selected].map((slug) =>
+        fetch(`/api/admin/guides/${slug}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${t}` },
+        })
+      )
+    );
+    setGuides((prev) => prev.filter((g) => !selected.has(g.slug)));
+    setSelected(new Set());
+    setMsg(`${selected.size}개 삭제 완료`);
+    setTimeout(() => setMsg(''), 3000);
+    setDeleting(false);
+  }, [selected]);
+
+  const toggleSelect = (slug) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(slug) ? next.delete(slug) : next.add(slug);
+      return next;
+    });
+
+  const toggleSelectAll = () =>
+    setSelected((prev) =>
+      prev.size === paginated.length ? new Set() : new Set(paginated.map((g) => g.slug))
+    );
+
   useEffect(() => { setPage(1); }, [search, filter]);
 
   const filtered = guides.filter((g) => {
@@ -98,6 +132,20 @@ export default function AdminGuidesPage() {
 
         {msg && (
           <span style={{ fontSize: 12, fontWeight: 600, color: '#059669' }}>{msg}</span>
+        )}
+
+        {selected.size > 0 && (
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            style={{
+              fontSize: 12, fontWeight: 700, padding: '4px 14px', borderRadius: 6,
+              background: '#e53e3e', color: '#fff', border: 'none',
+              cursor: deleting ? 'not-allowed' : 'pointer', opacity: deleting ? 0.7 : 1,
+            }}
+          >
+            {deleting ? '삭제 중…' : `선택 삭제 (${selected.size})`}
+          </button>
         )}
 
         <button
@@ -155,6 +203,18 @@ export default function AdminGuidesPage() {
           </div>
         </div>
 
+        {/* 전체 선택 */}
+        {!loading && filtered.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <button
+              onClick={toggleSelectAll}
+              style={{ fontSize: 12, color: '#7a8699', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}
+            >
+              {selected.size === paginated.length && paginated.length > 0 ? '전체 해제' : '전체 선택'}
+            </button>
+          </div>
+        )}
+
         {/* 목록 */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: '#9aa5b8', fontSize: 14 }}>불러오는 중…</div>
@@ -166,10 +226,20 @@ export default function AdminGuidesPage() {
               <div
                 key={g.slug}
                 style={{
-                  background: '#fff', border: '1px solid #e1e5eb', borderRadius: 12,
+                  background: selected.has(g.slug) ? '#f0f4ff' : '#fff',
+                  border: `1px solid ${selected.has(g.slug) ? '#a5b4fc' : '#e1e5eb'}`,
+                  borderRadius: 12,
                   padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12,
                 }}
               >
+                {/* 체크박스 */}
+                <input
+                  type="checkbox"
+                  checked={selected.has(g.slug)}
+                  onChange={() => toggleSelect(g.slug)}
+                  style={{ width: 15, height: 15, cursor: 'pointer', flexShrink: 0, accentColor: '#3268ff' }}
+                />
+
                 {/* 발행 상태 */}
                 <span style={{
                   flexShrink: 0, fontSize: 10, fontWeight: 700, padding: '3px 8px',

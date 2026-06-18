@@ -104,3 +104,42 @@ export async function PATCH(request, { params }) {
 
   return NextResponse.json({ ok: true });
 }
+
+// DELETE /api/admin/guides/[slug] — 글 삭제
+export async function DELETE(request, { params }) {
+  if (!(await verifyToken(request))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!SUPABASE_URL || !SERVICE_KEY) {
+    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+  }
+
+  const { slug } = params;
+
+  // 1) guide id 조회
+  const idRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/guides?slug=eq.${encodeURIComponent(slug)}&select=id`,
+    { headers: getAdminHeaders() }
+  );
+  const idRows = idRes.ok ? await idRes.json() : [];
+  if (!idRows.length) return NextResponse.json({ error: 'Guide not found' }, { status: 404 });
+  const guideId = idRows[0].id;
+
+  // 2) 섹션 먼저 삭제
+  await fetch(
+    `${SUPABASE_URL}/rest/v1/guide_sections?guide_id=eq.${guideId}`,
+    { method: 'DELETE', headers: getAdminHeaders() }
+  );
+
+  // 3) 가이드 삭제
+  const delRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/guides?slug=eq.${encodeURIComponent(slug)}`,
+    { method: 'DELETE', headers: getAdminHeaders() }
+  );
+  if (!delRes.ok) {
+    const errText = await delRes.text();
+    return NextResponse.json({ error: errText }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
