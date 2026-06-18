@@ -102,6 +102,7 @@ class SupabasePublisher:
             "key_points": guide.key_points,
             "sources": guide.sources,
             "published_at": guide.published_at,
+            "published": False,
             "related_slugs": related_slugs,
             "prompt_version_id": prompt_version_id,
         }

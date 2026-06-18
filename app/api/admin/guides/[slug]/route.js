@@ -35,7 +35,7 @@ export async function PATCH(request, { params }) {
 
   const { slug } = params;
   const body = await request.json();
-  const { title, description, category, keyPoints, sources, sections, contentType, seriesId, seriesOrder } = body;
+  const { title, description, category, keyPoints, sources, sections, contentType, seriesId, seriesOrder, published } = body;
 
   // 1) guides 행의 id 조회
   const idRes = await fetch(
@@ -47,24 +47,25 @@ export async function PATCH(request, { params }) {
   if (!idRows.length) return NextResponse.json({ error: 'Guide not found' }, { status: 404 });
   const guideId = idRows[0].id;
 
-  // 2) guides 테이블 업데이트 (published_at 제외)
+  // 2) guides 테이블 업데이트 (published_at 제외, 전달된 필드만 반영)
   const today = new Date().toISOString().slice(0, 10);
+  const patchData = { updated_at: today };
+  if (title !== undefined) patchData.title = title;
+  if (description !== undefined) patchData.description = description;
+  if (category !== undefined) patchData.category = category;
+  if (keyPoints !== undefined) patchData.key_points = keyPoints;
+  if (sources !== undefined) patchData.sources = sources;
+  if (contentType !== undefined) patchData.content_type = contentType;
+  if (seriesId !== undefined) patchData.series_id = seriesId ?? null;
+  if (seriesOrder !== undefined) patchData.series_order = seriesOrder ? Number(seriesOrder) : null;
+  if (typeof published === 'boolean') patchData.published = published;
+
   const patchRes = await fetch(
     `${SUPABASE_URL}/rest/v1/guides?slug=eq.${encodeURIComponent(slug)}`,
     {
       method: 'PATCH',
       headers: getAdminHeaders(),
-      body: JSON.stringify({
-        title,
-        description,
-        category,
-        key_points: keyPoints ?? [],
-        sources: sources ?? [],
-        updated_at: today,
-        content_type: contentType || 'guide',
-        series_id: seriesId ?? null,
-        series_order: seriesOrder ?? null,
-      }),
+      body: JSON.stringify(patchData),
     }
   );
   if (!patchRes.ok) {
@@ -72,30 +73,32 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ error: errText }, { status: 500 });
   }
 
-  // 3) 기존 섹션 삭제
-  await fetch(
-    `${SUPABASE_URL}/rest/v1/guide_sections?guide_id=eq.${guideId}`,
-    { method: 'DELETE', headers: getAdminHeaders() }
-  );
-
-  // 4) 새 섹션 삽입
-  if (sections && sections.length > 0) {
-    const rows = sections.map((s, i) => ({
-      guide_id: guideId,
-      order_index: i,
-      title: s.title,
-      paragraphs: s.paragraphs ?? [],
-      bullets: s.bullets ?? null,
-      callout: s.callout ?? null,
-      section_table: s.table ?? null,
-    }));
-    const insertRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/guide_sections`,
-      { method: 'POST', headers: getAdminHeaders(), body: JSON.stringify(rows) }
+  // 3) 섹션이 전달된 경우에만 교체 (published 토글 시에는 섹션 건드리지 않음)
+  if (sections !== undefined) {
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/guide_sections?guide_id=eq.${guideId}`,
+      { method: 'DELETE', headers: getAdminHeaders() }
     );
-    if (!insertRes.ok) {
-      const errText = await insertRes.text();
-      return NextResponse.json({ error: errText }, { status: 500 });
+
+    // 4) 새 섹션 삽입
+    if (sections.length > 0) {
+      const rows = sections.map((s, i) => ({
+        guide_id: guideId,
+        order_index: i,
+        title: s.title,
+        paragraphs: s.paragraphs ?? [],
+        bullets: s.bullets ?? null,
+        callout: s.callout ?? null,
+        section_table: s.table ?? null,
+      }));
+      const insertRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/guide_sections`,
+        { method: 'POST', headers: getAdminHeaders(), body: JSON.stringify(rows) }
+      );
+      if (!insertRes.ok) {
+        const errText = await insertRes.text();
+        return NextResponse.json({ error: errText }, { status: 500 });
+      }
     }
   }
 

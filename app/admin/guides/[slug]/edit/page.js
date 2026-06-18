@@ -105,6 +105,7 @@ export default function EditPage({ params }) {
   const [mode, setMode] = useState('visual'); // 'visual' | 'html'
   const [htmlContent, setHtmlContent] = useState('');
   const [saveMsg, setSaveMsg] = useState('');
+  const [published, setPublished] = useState(false);
   const [unsplashOpen, setUnsplashOpen] = useState(false);
   const [unsplashQuery, setUnsplashQuery] = useState('');
   const [unsplashResults, setUnsplashResults] = useState([]);
@@ -127,6 +128,7 @@ export default function EditPage({ params }) {
         if (data) {
           setGuide(data);
           setHtmlContent(sectionsToHtml(data.sections));
+          setPublished(data.published ?? false);
         }
         setLoading(false);
       });
@@ -177,6 +179,27 @@ export default function EditPage({ params }) {
       setSaveMsg(`저장 실패: ${err.error || res.status}`);
     }
   }, [guide, htmlContent, mode, slug]);
+
+  // 발행 토글
+  const handlePublish = useCallback(async (newPublished) => {
+    setSaving(true);
+    setSaveMsg('');
+    const token = localStorage.getItem('admin_token');
+    const res = await fetch(`/api/admin/guides/${slug}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ published: newPublished }),
+    });
+    setSaving(false);
+    if (res.ok) {
+      setPublished(newPublished);
+      setSaveMsg(newPublished ? '발행되었습니다!' : '임시저장으로 변경되었습니다.');
+      setTimeout(() => setSaveMsg(''), 3000);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      setSaveMsg(`오류: ${err.error || res.status}`);
+    }
+  }, [slug]);
 
   // Ctrl+S 단축키
   useEffect(() => {
@@ -397,6 +420,34 @@ export default function EditPage({ params }) {
         <button onClick={() => window.open(`/guides/${slug}`, '_blank')} style={outlineBtnSt}>
           발행 페이지
         </button>
+
+        {/* 발행 상태 뱃지 */}
+        <span style={{
+          fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 999,
+          background: published ? '#d1fae5' : '#fef3c7',
+          color: published ? '#065f46' : '#92400e',
+          whiteSpace: 'nowrap',
+        }}>
+          {published ? '● 발행됨' : '○ 임시저장'}
+        </span>
+
+        {/* 발행 토글 버튼 */}
+        <button
+          onClick={() => handlePublish(!published)}
+          disabled={saving}
+          style={{
+            padding: '6px 14px', fontSize: 13, fontWeight: 600, borderRadius: 8,
+            background: published ? '#fff' : '#059669',
+            color: published ? '#e53e3e' : '#fff',
+            border: published ? '1.5px solid #e53e3e' : '1.5px solid #059669',
+            cursor: saving ? 'not-allowed' : 'pointer',
+            opacity: saving ? 0.7 : 1,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {published ? '발행 취소' : '발행하기'}
+        </button>
+
         <button onClick={handleSave} disabled={saving} style={{ ...primaryBtnSt, opacity: saving ? 0.7 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}>
           {saving ? '저장 중…' : '저장'}
         </button>

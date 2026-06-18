@@ -34,6 +34,7 @@ export async function GET(request, { params }) {
     title: g.title,
     description: g.description,
     category: g.category,
+    published: g.published ?? false,
     publishedAt: g.published_at,
     updatedAt: (g.updated_at || g.published_at || '').slice(0, 10),
     readTime: g.read_time,
