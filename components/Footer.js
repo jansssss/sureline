@@ -57,12 +57,20 @@ export default function Footer() {
           </p>
           <div className="text-center mt-4">
             {isAdmin ? (
-              <button
-                onClick={logout}
-                style={{ fontSize: '10px', color: '#9aa5b8', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
-              >
-                관리자 로그아웃
-              </button>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Link
+                  href="/admin/guides"
+                  style={{ fontSize: '10px', color: '#3268ff', textDecoration: 'none', fontWeight: 600, padding: '2px 6px' }}
+                >
+                  가이드 관리
+                </Link>
+                <button
+                  onClick={logout}
+                  style={{ fontSize: '10px', color: '#9aa5b8', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}
+                >
+                  로그아웃
+                </button>
+              </span>
             ) : (
               <button
                 onClick={() => setShowModal(true)}
