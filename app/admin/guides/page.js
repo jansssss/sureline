@@ -17,6 +17,8 @@ export default function AdminGuidesPage() {
   const [filter, setFilter] = useState('all'); // 'all' | 'published' | 'draft'
   const [togglingSlug, setTogglingSlug] = useState(null);
   const [msg, setMsg] = useState('');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
 
@@ -59,6 +61,8 @@ export default function AdminGuidesPage() {
     setTogglingSlug(null);
   }, []);
 
+  useEffect(() => { setPage(1); }, [search, filter]);
+
   const filtered = guides.filter((g) => {
     const matchSearch = !search || g.title?.toLowerCase().includes(search.toLowerCase());
     const matchFilter =
@@ -70,6 +74,8 @@ export default function AdminGuidesPage() {
 
   const publishedCount = guides.filter((g) => g.published).length;
   const draftCount = guides.filter((g) => !g.published).length;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8f9fb' }}>
@@ -153,7 +159,7 @@ export default function AdminGuidesPage() {
           <div style={{ textAlign: 'center', padding: '60px 0', color: '#9aa5b8', fontSize: 14 }}>결과가 없습니다.</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {filtered.map((g) => (
+            {paginated.map((g) => (
               <div
                 key={g.slug}
                 style={{
@@ -211,6 +217,49 @@ export default function AdminGuidesPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* 페이지네이션 */}
+        {!loading && totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 20, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              style={{
+                padding: '6px 14px', fontSize: 13, fontWeight: 600, borderRadius: 8,
+                border: '1px solid #dde6ff', background: '#fff',
+                color: page === 1 ? '#c7d2e8' : '#5a6a85',
+                cursor: page === 1 ? 'default' : 'pointer',
+              }}
+            >←</button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                style={{
+                  width: 34, height: 34, fontSize: 13, borderRadius: 8,
+                  fontWeight: p === page ? 700 : 400,
+                  border: '1px solid',
+                  borderColor: p === page ? '#3268ff' : '#dde6ff',
+                  background: p === page ? '#3268ff' : '#fff',
+                  color: p === page ? '#fff' : '#5a6a85',
+                  cursor: 'pointer',
+                }}
+              >{p}</button>
+            ))}
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              style={{
+                padding: '6px 14px', fontSize: 13, fontWeight: 600, borderRadius: 8,
+                border: '1px solid #dde6ff', background: '#fff',
+                color: page === totalPages ? '#c7d2e8' : '#5a6a85',
+                cursor: page === totalPages ? 'default' : 'pointer',
+              }}
+            >→</button>
           </div>
         )}
       </div>
