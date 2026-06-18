@@ -18,15 +18,16 @@ export default function AdminGuidesPage() {
   const [togglingSlug, setTogglingSlug] = useState(null);
   const [msg, setMsg] = useState('');
   const [page, setPage] = useState(1);
+  const [authChecked, setAuthChecked] = useState(false);
   const PAGE_SIZE = 20;
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
-
   useEffect(() => {
-    if (!localStorage.getItem('admin_token')) {
+    const token = localStorage.getItem('admin_token');
+    if (!token) {
       router.replace('/');
       return;
     }
+    setAuthChecked(true);
     loadGuides();
   }, []);
 
@@ -76,6 +77,8 @@ export default function AdminGuidesPage() {
   const draftCount = guides.filter((g) => !g.published).length;
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  if (!authChecked) return null;
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8f9fb' }}>
