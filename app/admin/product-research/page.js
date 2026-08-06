@@ -77,6 +77,7 @@ export default function ProductResearchPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [busy, setBusy] = useState('');
   const [diagnosis, setDiagnosis] = useState(null);
+  const [fetchProgress, setFetchProgress] = useState(null);
 
   const authFetch = useCallback(async (url, init = {}) => {
     const token = localStorage.getItem('admin_token');
@@ -185,6 +186,12 @@ export default function ProductResearchPage() {
     });
     return arr;
   }, [filtered, sort]);
+
+  /** 일괄 수집 대상 — 선택이 있으면 선택분, 없으면 현재 필터에 걸린 전체 */
+  const fetchTargets = useMemo(
+    () => (selected.size > 0 ? sorted.filter((c) => selected.has(c.id)) : sorted),
+    [sorted, selected]
+  );
 
   const toggleSort = (key) =>
     setSort((prev) => (prev.key === key
@@ -304,28 +311,36 @@ export default function ProductResearchPage() {
     }
   };
 
-  /** 선택한 후보들의 검색 지표를 네이버에서 순차 수집한다 (API 부담을 줄이려 순차 처리) */
-  const fetchNaverForSelected = async () => {
-    const ids = [...selected];
-    if (ids.length === 0) return;
+  /**
+   * 네이버 검색 지표 일괄 수집.
+   * 선택한 후보가 있으면 그것만, 없으면 현재 필터에 걸린 후보 전체를 대상으로 한다.
+   * 네이버 호출 한도를 배려해 순차로 보내고 사이에 짧은 간격을 둔다.
+   */
+  const fetchNaverBulk = async () => {
+    const targets = fetchTargets;
+    if (targets.length === 0) return;
+
     setBusy('fetch');
     setError('');
+    setFetchProgress({ done: 0, total: targets.length });
     const failed = [];
     let done = 0;
 
-    for (const id of ids) {
+    for (const c of targets) {
       try {
-        const res = await authFetch(`/api/admin/product-research/${id}/fetch`, { method: 'POST' });
+        const res = await authFetch(`/api/admin/product-research/${c.id}/fetch`, { method: 'POST' });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || '수집 실패');
         done += 1;
       } catch (e) {
-        const name = candidates.find((c) => c.id === id)?.product_name ?? id;
-        failed.push(`${name}: ${e.message}`);
+        failed.push(`${c.product_name}: ${e.message}`);
       }
+      setFetchProgress({ done: done + failed.length, total: targets.length });
+      await new Promise((r) => setTimeout(r, 250));
     }
 
     setBusy('');
+    setFetchProgress(null);
     if (failed.length) setError(`수집 실패 ${failed.length}건 — ${failed.join(' / ')}`);
     flash(`네이버 검색량 수집 완료 — ${done}건 반영${failed.length ? `, ${failed.length}건 실패` : ''}`);
     load();
@@ -349,11 +364,26 @@ export default function ProductResearchPage() {
   const toggleSelect = (id) => setSelected((prev) => {
     const next = new Set(prev);
     if (next.has(id)) next.delete(id);
-    else if (next.size < MAX_COMPARE) next.add(id);
+    else next.add(id);
     return next;
   });
 
+  // 화면에 보이는(필터 적용된) 후보 전체 선택 / 해제
+  const allVisibleSelected = sorted.length > 0 && sorted.every((c) => selected.has(c.id));
+  const someVisibleSelected = sorted.some((c) => selected.has(c.id));
+
+  const toggleSelectAllVisible = () =>
+    setSelected((prev) => {
+      if (allVisibleSelected) {
+        const next = new Set(prev);
+        for (const c of sorted) next.delete(c.id);
+        return next;
+      }
+      return new Set([...prev, ...sorted.map((c) => c.id)]);
+    });
+
   const selectedCandidates = ranked.filter((c) => selected.has(c.id));
+  const canCompare = selected.size >= 2 && selected.size <= MAX_COMPARE;
   const notConnected = providers.filter((p) => !p.connected);
 
   if (!authChecked) return null;
@@ -424,16 +454,23 @@ export default function ProductResearchPage() {
           <div style={{ flex: 1 }} />
           <Button
             variant="soft"
-            onClick={fetchNaverForSelected}
-            disabled={selected.size === 0 || busy === 'fetch'}
-            title="선택한 후보의 대표 키워드로 네이버 검색량을 가져옵니다"
+            onClick={fetchNaverBulk}
+            disabled={fetchTargets.length === 0 || busy === 'fetch'}
+            title={selected.size > 0
+              ? '선택한 후보의 대표 키워드로 네이버 검색량을 가져옵니다'
+              : '현재 필터에 걸린 후보 전체의 검색량을 가져옵니다'}
           >
-            {busy === 'fetch' ? '수집 중…' : `네이버 검색량 수집 (${selected.size})`}
+            {busy === 'fetch' && fetchProgress
+              ? `수집 중… ${fetchProgress.done}/${fetchProgress.total}`
+              : `네이버 검색량 수집 (${selected.size > 0 ? `선택 ${fetchTargets.length}` : `전체 ${fetchTargets.length}`})`}
           </Button>
           <Button
-            variant={selected.size >= 2 ? 'primary' : 'default'}
+            variant={canCompare ? 'primary' : 'default'}
             onClick={() => setCompareOpen(true)}
-            disabled={selected.size < 2}
+            disabled={!canCompare}
+            title={selected.size > MAX_COMPARE
+              ? `비교는 최대 ${MAX_COMPARE}개까지입니다. 현재 ${selected.size}개 선택됨`
+              : '2~5개를 선택하면 가로로 비교합니다'}
           >
             선택 비교 ({selected.size}/{MAX_COMPARE})
           </Button>
@@ -500,7 +537,17 @@ export default function ProductResearchPage() {
             <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 1180, fontSize: 12.5 }}>
               <thead>
                 <tr style={{ background: '#f8fafc' }}>
-                  <th style={{ ...thStyle, width: 36 }} />
+                  <th style={{ ...thStyle, width: 36 }}>
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      ref={(el) => { if (el) el.indeterminate = someVisibleSelected && !allVisibleSelected; }}
+                      onChange={toggleSelectAllVisible}
+                      aria-label={allVisibleSelected ? '전체 선택 해제' : '전체 선택'}
+                      title={allVisibleSelected ? '전체 선택 해제' : '보이는 후보 전체 선택'}
+                      style={{ width: 14, height: 14, accentColor: T.primary, cursor: 'pointer' }}
+                    />
+                  </th>
                   {SORT_COLUMNS.map((col) => (
                     <th
                       key={col.key}
@@ -540,8 +587,7 @@ export default function ProductResearchPage() {
                           type="checkbox"
                           checked={checked}
                           onChange={() => toggleSelect(c.id)}
-                          disabled={!checked && selected.size >= MAX_COMPARE}
-                          aria-label={`${c.product_name} 비교 선택`}
+                          aria-label={`${c.product_name} 선택`}
                           style={{ width: 14, height: 14, accentColor: T.primary, cursor: 'pointer' }}
                         />
                       </td>
@@ -676,7 +722,7 @@ export default function ProductResearchPage() {
       />
 
       <CompareModal
-        open={compareOpen && selectedCandidates.length >= 2}
+        open={compareOpen && canCompare}
         candidates={selectedCandidates}
         onClose={() => setCompareOpen(false)}
       />
