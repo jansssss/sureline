@@ -76,6 +76,7 @@ export default function ProductResearchPage() {
   const [historyTarget, setHistoryTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [busy, setBusy] = useState('');
+  const [diagnosis, setDiagnosis] = useState(null);
 
   const authFetch = useCallback(async (url, init = {}) => {
     const token = localStorage.getItem('admin_token');
@@ -296,6 +297,21 @@ export default function ProductResearchPage() {
       a.download = `product-research-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const runDiagnose = async () => {
+    setBusy('diagnose');
+    setDiagnosis(null);
+    try {
+      const res = await authFetch('/api/admin/product-research/diagnose');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '진단에 실패했습니다.');
+      setDiagnosis(data);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -582,8 +598,12 @@ export default function ProductResearchPage() {
         {/* 외부 데이터 연결 상태 */}
         {notConnected.length > 0 && (
           <Card style={{ marginTop: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: T.sub, marginBottom: 8 }}>
-              외부 데이터 연결 상태
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color: T.sub }}>외부 데이터 연결 상태</span>
+              <div style={{ flex: 1 }} />
+              <Button size="sm" onClick={runDiagnose} disabled={busy === 'diagnose'}>
+                {busy === 'diagnose' ? '진단 중…' : '연결 진단'}
+              </Button>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {providers.map((p) => (
@@ -605,6 +625,8 @@ export default function ProductResearchPage() {
             <p style={{ fontSize: 11, color: T.muted, margin: '10px 0 0', lineHeight: 1.6 }}>
               미연결 데이터원은 값을 생성하지 않습니다. 현재는 관리자 직접 입력과 CSV 가져오기만 실제로 동작합니다.
             </p>
+
+            {diagnosis && <DiagnosisResult data={diagnosis} />}
           </Card>
         )}
       </div>
@@ -706,6 +728,71 @@ function SummaryCard({ label, value, unit, text, sub, color = T.text }) {
         </div>
       )}
       {sub && <div style={{ fontSize: 11, color: T.primary, fontWeight: 700, marginTop: 2 }}>{sub}</div>}
+    </div>
+  );
+}
+
+/** 외부 API 키 진단 결과 — 값이 아니라 통과 여부만 보여준다 */
+function DiagnosisResult({ data }) {
+  return (
+    <div style={{ marginTop: 12, borderTop: `1px solid ${T.borderSoft}`, paddingTop: 12 }}>
+      <div style={{ fontSize: 11.5, fontWeight: 800, color: T.sub, marginBottom: 6 }}>
+        진단 결과 <span style={{ fontWeight: 500, color: T.muted }}>· 테스트 키워드 &quot;{data.testedKeyword}&quot;</span>
+      </div>
+
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 10 }}>
+        {Object.entries(data.env).map(([key, present]) => (
+          <Badge key={key} bg={present ? '#d1fae5' : '#fee2e2'} fg={present ? '#065f46' : '#b91c1c'} icon={present ? '✓' : '✕'}>
+            {key}
+          </Badge>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {data.checks.map((c) => (
+          <div key={c.id} style={{
+            border: `1px solid ${c.ok ? '#a7f3d0' : c.skipped ? T.border : '#fecaca'}`,
+            background: c.ok ? '#f0fdf4' : c.skipped ? '#fafafa' : '#fef2f2',
+            borderRadius: 9, padding: '9px 11px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+              <Badge
+                bg={c.ok ? '#d1fae5' : c.skipped ? '#f4f4f5' : '#fee2e2'}
+                fg={c.ok ? '#065f46' : c.skipped ? '#71717a' : '#b91c1c'}
+                icon={c.ok ? '✓' : c.skipped ? '—' : '✕'}
+              >
+                {c.ok ? '통과' : c.skipped ? '건너뜀' : '실패'}
+              </Badge>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: T.text }}>{c.name}</span>
+              {c.status && <span style={{ fontSize: 11, color: T.muted }}>HTTP {c.status}</span>}
+            </div>
+
+            <div style={{ fontSize: 11.5, color: T.sub, marginTop: 4, lineHeight: 1.6 }}>{c.message}</div>
+            {c.hint && <div style={{ fontSize: 11, color: T.warnFg, marginTop: 3 }}>힌트: {c.hint}</div>}
+
+            {c.sample && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                {Object.entries(c.sample).map(([k, v]) => (
+                  <span key={k} style={{
+                    fontSize: 11, background: '#fff', border: `1px solid ${T.border}`,
+                    borderRadius: 6, padding: '2px 7px', color: T.text,
+                  }}>
+                    <span style={{ color: T.muted }}>{k}</span> <strong>{String(v)}</strong>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {c.body && (
+              <pre style={{
+                fontSize: 10.5, color: '#b91c1c', background: '#fff', margin: '6px 0 0',
+                padding: '6px 8px', borderRadius: 6, overflowX: 'auto', whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all', border: '1px solid #fecaca',
+              }}>{c.body}</pre>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
