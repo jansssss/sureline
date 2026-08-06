@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import crypto from 'node:crypto';
 import { verifyAdmin } from '@/lib/product-research/service.js';
+import { hasSearchAdEnv, fetchKeywordTool, findExactRow } from '@/lib/product-research/naver.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,60 +38,28 @@ export async function GET(request) {
 
 async function checkSearchAd() {
   const base = { id: 'naver_ad', name: '네이버 검색광고 키워드 도구' };
-  const apiKey = process.env.NAVER_AD_API_KEY;
-  const secret = process.env.NAVER_AD_SECRET_KEY;
-  const customer = process.env.NAVER_AD_CUSTOMER_ID;
 
-  if (!apiKey || !secret || !customer) {
+  if (!hasSearchAdEnv()) {
     return { ...base, ok: false, skipped: true, message: '환경변수 3개(API_KEY/SECRET_KEY/CUSTOMER_ID) 중 빠진 값이 있습니다.' };
   }
 
-  const path = '/keywordstool';
-  const timestamp = Date.now().toString();
-  const signature = crypto
-    .createHmac('sha256', secret)
-    .update(`${timestamp}.GET.${path}`)
-    .digest('base64');
-
-  // 힌트 키워드는 공백을 제거해서 보내는 것이 관례
-  const hint = encodeURIComponent(TEST_KEYWORD.replace(/\s/g, ''));
-
   try {
-    const res = await fetch(
-      `https://api.searchad.naver.com${path}?hintKeywords=${hint}&showDetail=1`,
-      {
-        headers: {
-          'X-Timestamp': timestamp,
-          'X-API-KEY': apiKey,
-          'X-Customer': customer,
-          'X-Signature': signature,
-        },
-        cache: 'no-store',
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }
-    );
-
-    const text = await res.text();
-    if (!res.ok) {
-      return { ...base, ok: false, status: res.status, message: hint401(res.status), body: truncate(text) };
-    }
-
-    const data = JSON.parse(text);
-    const first = data?.keywordList?.[0];
+    const list = await fetchKeywordTool(TEST_KEYWORD, { timeoutMs: TIMEOUT_MS });
+    const row = findExactRow(list, TEST_KEYWORD) ?? list[0];
     return {
       ...base,
       ok: true,
-      status: res.status,
-      message: `정상 — ${data?.keywordList?.length ?? 0}개 연관 키워드 수신`,
-      sample: first && {
-        키워드: first.relKeyword,
-        PC검색량: first.monthlyPcQcCnt,
-        모바일검색량: first.monthlyMobileQcCnt,
-        경쟁정도: first.compIdx,
+      status: 200,
+      message: `정상 — ${list.length}개 연관 키워드 수신`,
+      sample: row && {
+        키워드: row.relKeyword,
+        PC검색량: row.monthlyPcQcCnt,
+        모바일검색량: row.monthlyMobileQcCnt,
+        경쟁정도: row.compIdx,
       },
     };
   } catch (e) {
-    return { ...base, ok: false, message: `요청 실패: ${e.message}` };
+    return { ...base, ok: false, status: e.status, message: e.status ? hint401(e.status) : `요청 실패: ${e.message}`, body: truncate(e.message) };
   }
 }
 

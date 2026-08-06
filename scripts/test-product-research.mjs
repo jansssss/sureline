@@ -24,6 +24,9 @@ import {
 import {
   NotConnectedError, NaverKeywordProvider, ManualDataProvider, CsvImportProvider, PROVIDERS,
 } from '../lib/product-research/providers.js';
+import {
+  mapKeywordToolRow, parseSearchCount, weightedCtr, findExactRow, hasCensoredCount,
+} from '../lib/product-research/naver.js';
 
 // ─── 기본 평가기준을 seed 마이그레이션에서 그대로 읽어온다 ───────────────────
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -457,6 +460,72 @@ test('CSV 내보내기 — 콤마가 든 값은 따옴표로 감싸고 빈 값�
 });
 
 // ─── 프로바이더 ──────────────────────────────────────────────────────────────
+
+// ─── 네이버 검색광고 응답 변환 ───────────────────────────────────────────────
+
+test('검색광고 응답 1행을 우리 컬럼으로 옮긴다', () => {
+  const mapped = mapKeywordToolRow({
+    relKeyword: '버티컬마우스',
+    monthlyPcQcCnt: 15800,
+    monthlyMobileQcCnt: 14200,
+    monthlyAvePcClkCnt: 30.5,
+    monthlyAveMobileClkCnt: 12.1,
+    monthlyAvePcCtr: 0.21,
+    monthlyAveMobileCtr: 0.09,
+    compIdx: '중간',
+  });
+
+  assert.equal(mapped.pc_monthly_search, 15800);
+  assert.equal(mapped.mobile_monthly_search, 14200);
+  assert.equal(mapped.average_click_count, 42.6);
+  assert.equal(mapped.search_competition, '중간');
+  assert.equal(mapped.ad_competition, '중간');
+
+  // 총검색량은 파생 계산에 맡긴다
+  const derived = applyDerivedFields(mapped, { respectManualTotal: false });
+  assert.equal(derived.total_monthly_search, 30000);
+});
+
+test('검색광고 경쟁도 값은 우리 경쟁도 등급과 그대로 맞물린다', () => {
+  for (const level of ['낮음', '중간', '높음']) {
+    const mapped = mapKeywordToolRow({ compIdx: level });
+    const { errors } = validateCandidate({ product_name: 'A', primary_keyword: 'A', ...mapped });
+    assert.equal(errors.length, 0, `${level} 이 검증을 통과해야 한다`);
+  }
+});
+
+test('검색량 "< 10" 은 0이 아니라 9로 기록한다', () => {
+  assert.equal(parseSearchCount('< 10'), 9);
+  assert.equal(parseSearchCount('<10'), 9);
+  assert.equal(parseSearchCount('1,200'), 1200);
+  assert.equal(parseSearchCount(0), 0);
+  assert.equal(parseSearchCount(null), null);
+  assert.equal(parseSearchCount(''), null);
+});
+
+test('CTR 은 검색량으로 가중평균한다', () => {
+  // PC 0.2%(검색 100) + 모바일 0.4%(검색 300) → (0.2*100 + 0.4*300) / 400 = 0.35
+  assert.equal(weightedCtr(0.2, 0.4, 100, 300), 0.35);
+  // 검색량을 모르면 단순평균
+  assert.equal(weightedCtr(0.2, 0.4, null, null), 0.3);
+  // 둘 다 없으면 null
+  assert.equal(weightedCtr(null, null, 100, 300), null);
+});
+
+test('연관 키워드 목록에서 공백을 무시하고 정확히 일치하는 행만 고른다', () => {
+  const list = [
+    { relKeyword: '마우스' },
+    { relKeyword: '버티컬마우스' },
+    { relKeyword: '버티컬마우스추천' },
+  ];
+  assert.equal(findExactRow(list, '버티컬 마우스').relKeyword, '버티컬마우스');
+  assert.equal(findExactRow(list, '없는키워드'), null);
+});
+
+test('10 미만 검열 값이 섞였는지 감지한다 (출처 메모에 남기기 위함)', () => {
+  assert.equal(hasCensoredCount({ monthlyPcQcCnt: '< 10', monthlyMobileQcCnt: 120 }), true);
+  assert.equal(hasCensoredCount({ monthlyPcQcCnt: 800, monthlyMobileQcCnt: 120 }), false);
+});
 
 test('자동수집 대상은 네이버 검색·쇼핑뿐 — 쿠팡 프로바이더는 없다', () => {
   assert.deepEqual(

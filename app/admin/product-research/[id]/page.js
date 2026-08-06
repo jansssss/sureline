@@ -41,6 +41,7 @@ export default function ProductResearchDetailPage() {
   const [finalOpen, setFinalOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [chartField, setChartField] = useState('total_monthly_search');
+  const [fetching, setFetching] = useState(false);
 
   const authFetch = useCallback(async (url, init = {}) => {
     const token = localStorage.getItem('admin_token');
@@ -93,6 +94,26 @@ export default function ProductResearchDetailPage() {
     () => (candidate ? calculateScore(candidate, settings) : null),
     [candidate, settings]
   );
+
+  const handleFetchNaver = async () => {
+    setFetching(true);
+    setError('');
+    try {
+      const res = await authFetch(`/api/admin/product-research/${id}/fetch`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || '수집에 실패했습니다.');
+      const a = data.applied;
+      flash(
+        `네이버 검색광고 수집 완료 — 총 ${Number(a.total_monthly_search ?? 0).toLocaleString('ko-KR')}회` +
+        (a.search_competition ? ` · 경쟁도 ${a.search_competition}` : '')
+      );
+      load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setFetching(false);
+    }
+  };
 
   const handleUpdate = async (form) => {
     const res = await authFetch(`/api/admin/product-research/${id}`, {
@@ -182,6 +203,9 @@ export default function ProductResearchDetailPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <Button onClick={handleFetchNaver} disabled={fetching}>
+                    {fetching ? '수집 중…' : '네이버 검색량 가져오기'}
+                  </Button>
                   <Button variant="soft" onClick={() => setEditOpen(true)}>수정</Button>
                   <Button onClick={() => setHistoryOpen(true)}>데이터 기록 추가</Button>
                   <Button

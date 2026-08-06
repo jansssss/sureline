@@ -304,6 +304,33 @@ export default function ProductResearchPage() {
     }
   };
 
+  /** 선택한 후보들의 검색 지표를 네이버에서 순차 수집한다 (API 부담을 줄이려 순차 처리) */
+  const fetchNaverForSelected = async () => {
+    const ids = [...selected];
+    if (ids.length === 0) return;
+    setBusy('fetch');
+    setError('');
+    const failed = [];
+    let done = 0;
+
+    for (const id of ids) {
+      try {
+        const res = await authFetch(`/api/admin/product-research/${id}/fetch`, { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '수집 실패');
+        done += 1;
+      } catch (e) {
+        const name = candidates.find((c) => c.id === id)?.product_name ?? id;
+        failed.push(`${name}: ${e.message}`);
+      }
+    }
+
+    setBusy('');
+    if (failed.length) setError(`수집 실패 ${failed.length}건 — ${failed.join(' / ')}`);
+    flash(`네이버 검색량 수집 완료 — ${done}건 반영${failed.length ? `, ${failed.length}건 실패` : ''}`);
+    load();
+  };
+
   const runDiagnose = async () => {
     setBusy('diagnose');
     setDiagnosis(null);
@@ -395,6 +422,14 @@ export default function ProductResearchPage() {
             {busy === 'recalc' ? '계산 중…' : '점수 다시 계산'}
           </Button>
           <div style={{ flex: 1 }} />
+          <Button
+            variant="soft"
+            onClick={fetchNaverForSelected}
+            disabled={selected.size === 0 || busy === 'fetch'}
+            title="선택한 후보의 대표 키워드로 네이버 검색량을 가져옵니다"
+          >
+            {busy === 'fetch' ? '수집 중…' : `네이버 검색량 수집 (${selected.size})`}
+          </Button>
           <Button
             variant={selected.size >= 2 ? 'primary' : 'default'}
             onClick={() => setCompareOpen(true)}
