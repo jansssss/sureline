@@ -322,7 +322,6 @@ export default function ProductResearchPage() {
         background: '#fff', borderBottom: `1px solid ${T.border}`,
         padding: '0 16px', minHeight: 52,
         display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-        position: 'sticky', top: 0, zIndex: 20,
       }}>
         <Link href="/" style={{ fontSize: 13, color: T.sub, textDecoration: 'none' }}>← 홈</Link>
         <AdminNav />
