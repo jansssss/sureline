@@ -21,7 +21,9 @@ import { previewCsv, parseCsv, candidatesToCsv } from '../lib/product-research/c
 import {
   resolveFinalCandidateChange, applyFinalCandidateChange, countFinalCandidates,
 } from '../lib/product-research/final-candidate.js';
-import { NotConnectedError, NaverKeywordProvider, ManualDataProvider, CsvImportProvider } from '../lib/product-research/providers.js';
+import {
+  NotConnectedError, NaverKeywordProvider, ManualDataProvider, CsvImportProvider, PROVIDERS,
+} from '../lib/product-research/providers.js';
 
 // ─── 기본 평가기준을 seed 마이그레이션에서 그대로 읽어온다 ───────────────────
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -455,6 +457,14 @@ test('CSV 내보내기 — 콤마가 든 값은 따옴표로 감싸고 빈 값�
 });
 
 // ─── 프로바이더 ──────────────────────────────────────────────────────────────
+
+test('자동수집 대상은 네이버 검색·쇼핑뿐 — 쿠팡 프로바이더는 없다', () => {
+  assert.deepEqual(
+    PROVIDERS.map((p) => p.id),
+    ['manual', 'csv', 'naver_keyword', 'naver_shopping_insight', 'google_trends']
+  );
+  assert.equal(PROVIDERS.some((p) => /coupang/i.test(p.id)), false);
+});
 
 test('미연결 프로바이더는 가짜 데이터를 반환하지 않고 오류를 던진다', async () => {
   assert.equal(NaverKeywordProvider.connected, false);
