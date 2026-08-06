@@ -8,8 +8,9 @@ on:
         required: false
         default: false
         type: boolean
-  schedule:
-    - cron: "0 0 * * 1"   # KST 월요일 09:00 (UTC 일요일 00:00)
+  # 자동 진화 중단 (2026-08-06) — 수동 실행만 유지. 재개하려면 아래 2줄 주석 해제
+  # schedule:
+  #   - cron: "0 0 * * 1"   # KST 월요일 09:00 (UTC 일요일 00:00)
 
 jobs:
   evolve:

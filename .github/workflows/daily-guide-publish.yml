@@ -13,8 +13,9 @@ on:
         required: false
         default: false
         type: boolean
-  schedule:
-    - cron: "0 23 * * 0"    # 주 1회: 매주 월요일 KST 08:00 (UTC 일요일 23:00)
+  # 자동 발행 중단 (2026-08-06) — 수동 실행만 유지. 재개하려면 아래 2줄 주석 해제
+  # schedule:
+  #   - cron: "0 23 * * 0"    # 주 1회: 매주 월요일 KST 08:00 (UTC 일요일 23:00)
 
 jobs:
   publish:
