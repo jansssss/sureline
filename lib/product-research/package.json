@@ -1,0 +1,6 @@
+{
+  "name": "product-research-core",
+  "private": true,
+  "type": "module",
+  "//": "이 폴더는 순수 ESM 모듈이다. Next 번들과 plain Node 단위 테스트에서 동일하게 import 된다."
+}

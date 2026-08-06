@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AdminNav from '@/components/admin/AdminNav';
 
 function formatDate(dateStr) {
   if (!dateStr) return '-';
@@ -128,7 +129,8 @@ export default function AdminGuidesPage() {
           </svg>
           홈
         </Link>
-        <span style={{ fontSize: 15, fontWeight: 800, color: '#1c2741', flex: 1 }}>가이드 관리</span>
+        <AdminNav />
+        <span style={{ flex: 1 }} />
 
         {msg && (
           <span style={{ fontSize: 12, fontWeight: 600, color: '#059669' }}>{msg}</span>
