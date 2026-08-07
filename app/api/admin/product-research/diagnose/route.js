@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/admin/product-research/diagnose
  * 외부 API 키가 실제로 먹히는지 확인만 한다. 아무것도 저장하지 않는다.
- * 키 값은 절대 응답에 담지 않는다 — 존재 여부(boolean)만 노출한다.
+ * 키 값은 절대 응답에 담지 않는다 — 존재 여부와 지문(길이·공백)만 노출한다.
  */
 
 const TEST_KEYWORD = '버티컬 마우스';
@@ -31,12 +31,10 @@ export async function GET(request) {
     fingerprint('NAVER_OPENAPI_CLIENT_SECRET', process.env.NAVER_OPENAPI_CLIENT_SECRET),
   ];
 
-  const checks = await Promise.all([
-    checkSearchAd(),
-    checkOpenApiSearch(),
-    checkDatalabSearch(),
-    checkDatalabShopping(),
-  ]);
+  const checks = [
+    ...(await Promise.all([checkSearchAd(), checkDatalabSearch(), checkOpenApiSearch()])),
+    SHOPPING_INSIGHT_BLOCKED,
+  ];
 
   return NextResponse.json({ env, fingerprints, checks, testedKeyword: TEST_KEYWORD });
 }
@@ -52,38 +50,6 @@ function fingerprint(name, value, { showPrefix = false } = {}) {
     hasWhitespace: trimmed.length !== value.length,
     prefix: showPrefix ? `${trimmed.slice(0, 4)}…` : null,
   };
-}
-
-// ─── 네이버 오픈 API — 검색 (스코프 확인용) ─────────────────────────────────
-// 데이터랩과 같은 Client ID/Secret 을 쓴다.
-// 이것까지 막히면 애플리케이션에 스코프가 하나도 없다는 뜻이다.
-
-async function checkOpenApiSearch() {
-  const base = { id: 'openapi_search', name: '네이버 검색 API (스코프 확인용)' };
-  const id = process.env.NAVER_OPENAPI_CLIENT_ID;
-  const secret = process.env.NAVER_OPENAPI_CLIENT_SECRET;
-
-  if (!id || !secret) {
-    return { ...base, ok: false, skipped: true, message: '오픈 API 환경변수가 없습니다.' };
-  }
-
-  try {
-    const res = await fetch(
-      `https://openapi.naver.com/v1/search/blog.json?query=${encodeURIComponent(TEST_KEYWORD)}&display=1`,
-      {
-        headers: { 'X-Naver-Client-Id': id, 'X-Naver-Client-Secret': secret },
-        cache: 'no-store',
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      }
-    );
-    const text = await res.text();
-    if (!res.ok) {
-      return { ...base, ok: false, status: res.status, message: hint401(res.status), body: truncate(text) };
-    }
-    return { ...base, ok: true, status: res.status, message: '정상 — 이 Client ID/Secret 자체는 유효합니다.' };
-  } catch (e) {
-    return { ...base, ok: false, message: `요청 실패: ${e.message}` };
-  }
 }
 
 // ─── 네이버 검색광고 (키워드 도구) ───────────────────────────────────────────
@@ -115,7 +81,9 @@ async function checkSearchAd() {
   }
 }
 
-// ─── 네이버 데이터랩 — 검색어트렌드 ─────────────────────────────────────────
+// ─── 네이버 데이터랩 검색어트렌드 ────────────────────────────────────────────
+// 신규 등록은 막혔지만(2026-08 확인), 이미 데이터랩이 등록된 기존 애플리케이션의
+// Client ID/Secret 을 쓰면 동작한다.
 
 async function checkDatalabSearch() {
   const base = { id: 'datalab_search', name: '네이버 데이터랩 검색어트렌드' };
@@ -124,35 +92,13 @@ async function checkDatalabSearch() {
     timeUnit: 'month',
     keywordGroups: [{ groupName: TEST_KEYWORD, keywords: [TEST_KEYWORD] }],
   });
-  if (!result.ok) return { ...base, ...result };
 
-  const points = result.data?.results?.[0]?.data ?? [];
-  const last = points[points.length - 1];
-  return {
-    ...base,
-    ok: true,
-    status: result.status,
-    message: `정상 — ${points.length}개 구간 수신`,
-    sample: last && { 기간: last.period, 상대지수: last.ratio },
-  };
-}
-
-// ─── 네이버 데이터랩 — 쇼핑인사이트 ─────────────────────────────────────────
-
-async function checkDatalabShopping() {
-  const base = { id: 'datalab_shopping', name: '네이버 데이터랩 쇼핑인사이트' };
-  const result = await callDatalab('/v1/datalab/shopping/category/keywords', {
-    ...dateRange(),
-    timeUnit: 'month',
-    category: '50000003', // 디지털/가전 (실제 catId 는 확인 후 조정)
-    keyword: [{ name: TEST_KEYWORD, param: [TEST_KEYWORD] }],
-  });
   if (!result.ok) {
     return {
       ...base,
       ...result,
-      hint: result.status === 400
-        ? '카테고리 코드(catId)가 맞지 않을 수 있습니다. 네이버 쇼핑에서 해당 카테고리 URL의 catId 를 확인하세요.'
+      hint: result.status === 401
+        ? '이 Client ID/Secret 의 애플리케이션에 데이터랩이 등록돼 있지 않습니다. 데이터랩이 이미 등록된 기존 앱의 키를 쓰세요.'
         : undefined,
     };
   }
@@ -163,9 +109,56 @@ async function checkDatalabShopping() {
     ...base,
     ok: true,
     status: result.status,
-    message: `정상 — ${points.length}개 구간 수신`,
+    message: `정상 — ${points.length}개 구간 수신 (상대지수)`,
     sample: last && { 기간: last.period, 상대지수: last.ratio },
   };
+}
+
+// ─── 네이버 데이터랩 쇼핑인사이트 — 연결 불가 ───────────────────────────────
+// 2026-08-06 확인: 사용 API 로 추가하려 하면
+// "신규로 등록할 수 없는 API가 선택되었습니다"로 거부된다.
+
+const SHOPPING_INSIGHT_BLOCKED = {
+  id: 'datalab_shopping',
+  name: '네이버 데이터랩 쇼핑인사이트',
+  ok: false,
+  skipped: true,
+  message: '신규 등록 차단됨 — 네이버가 신규 발급을 막았습니다(2026-08-06 확인).',
+  hint: '쇼핑 관심도는 datalab.naver.com 에서 확인해 수동 입력하세요.',
+};
+
+// ─── 네이버 검색 API — 참고용 ────────────────────────────────────────────────
+// 데이터랩이 401 일 때 "키가 틀린 것"인지 "스코프가 없는 것"인지 가리는 데만 쓴다.
+
+async function checkOpenApiSearch() {
+  const base = { id: 'openapi_search', name: '네이버 검색 API (참고용 — 우리 기능에는 쓰지 않음)' };
+  const id = process.env.NAVER_OPENAPI_CLIENT_ID;
+  const secret = process.env.NAVER_OPENAPI_CLIENT_SECRET;
+
+  if (!id || !secret) {
+    return { ...base, ok: false, skipped: true, message: '오픈 API 환경변수가 없습니다.' };
+  }
+
+  try {
+    const res = await fetch(
+      `https://openapi.naver.com/v1/search/blog.json?query=${encodeURIComponent(TEST_KEYWORD)}&display=1`,
+      {
+        headers: { 'X-Naver-Client-Id': id, 'X-Naver-Client-Secret': secret },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      }
+    );
+    const text = await res.text();
+    if (!res.ok) {
+      return {
+        ...base, ok: false, status: res.status, message: hint401(res.status), body: truncate(text),
+        hint: '이 앱에 검색 스코프가 없을 뿐입니다. 데이터랩이 통과했다면 무시해도 됩니다.',
+      };
+    }
+    return { ...base, ok: true, status: res.status, message: '정상' };
+  } catch (e) {
+    return { ...base, ok: false, message: `요청 실패: ${e.message}` };
+  }
 }
 
 // ─── 공통 ────────────────────────────────────────────────────────────────────
@@ -213,7 +206,7 @@ function dateRange() {
 }
 
 function hint401(status) {
-  if (status === 401) return '인증 실패 — 키 값 또는 서명이 틀렸습니다.';
+  if (status === 401) return '인증 실패 — 키 값 또는 애플리케이션 권한(스코프) 문제입니다.';
   if (status === 403) return '권한 없음 — 이 API 사용이 허용되지 않은 계정/애플리케이션입니다.';
   if (status === 400) return '요청 형식 오류 — 파라미터를 확인해야 합니다.';
   if (status === 429) return '호출 한도 초과 — 잠시 후 다시 시도하세요.';

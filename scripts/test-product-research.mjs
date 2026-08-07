@@ -530,7 +530,7 @@ test('10 미만 검열 값이 섞였는지 감지한다 (출처 메모에 남기
 test('자동수집 대상은 네이버 검색·쇼핑뿐 — 쿠팡 프로바이더는 없다', () => {
   assert.deepEqual(
     PROVIDERS.map((p) => p.id),
-    ['manual', 'csv', 'naver_keyword', 'naver_shopping_insight', 'google_trends']
+    ['manual', 'csv', 'naver_keyword', 'naver_search_trend', 'naver_shopping_insight', 'google_trends']
   );
   assert.equal(PROVIDERS.some((p) => /coupang/i.test(p.id)), false);
 });

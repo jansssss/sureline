@@ -819,37 +819,32 @@ function SummaryCard({ label, value, unit, text, sub, color = T.text }) {
  */
 function Verdict({ checks, fingerprints }) {
   const by = Object.fromEntries((checks || []).map((c) => [c.id, c]));
-  const search = by.openapi_search;
-  const datalab = [by.datalab_search, by.datalab_shopping].filter(Boolean);
-  const datalabOk = datalab.length > 0 && datalab.every((c) => c.ok);
+  const ad = by.naver_ad;
+  const trend = by.datalab_search;
   const whitespace = (fingerprints || []).filter((f) => f.hasWhitespace);
 
-  let tone = 'info';
-  let title = '';
-  let body = '';
+  let tone;
+  let title;
+  let body;
 
   if (whitespace.length) {
     tone = 'bad';
-    title = '우리 쪽 설정 문제 — 환경변수 값에 공백이 섞였습니다';
-    body = `${whitespace.map((f) => f.name).join(', ')} 값 앞뒤에 공백이나 줄바꿈이 있습니다. Vercel에서 값을 지우고 다시 붙여넣은 뒤 재배포하세요.`;
-  } else if (datalabOk) {
+    title = '환경변수 값에 공백이 섞였습니다';
+    body = `${whitespace.map((f) => f.name).join(', ')} 값 앞뒤에 공백이나 줄바꿈이 있습니다. Vercel에서 지우고 다시 붙여넣은 뒤 재배포하세요.`;
+  } else if (!ad?.ok) {
+    tone = ad?.skipped ? 'info' : 'bad';
+    title = ad?.skipped ? '검색광고 환경변수가 없습니다' : '검색광고 연결 실패';
+    body = ad?.skipped
+      ? 'NAVER_AD_API_KEY / SECRET_KEY / CUSTOMER_ID 를 Vercel에 등록하고 재배포하세요.'
+      : `${ad?.message ?? ''} 키 값과 CUSTOMER_ID를 다시 확인하세요.`;
+  } else if (trend?.ok) {
     tone = 'good';
-    title = '데이터랩 연결됨';
-    body = '쇼핑 관심도와 추세 자동 수집을 붙일 수 있습니다.';
-  } else if (search?.ok) {
-    tone = 'warn';
-    title = '네이버 콘솔 권한 문제 — 데이터랩 스코프만 없습니다';
-    body = '같은 Client ID/Secret으로 검색 API는 통과했습니다. 키 값과 환경변수 설정은 정상이라는 뜻입니다. 네이버 개발자센터에서 이 애플리케이션에 "데이터랩" 사용 API를 추가해야 합니다.';
-  } else if (search && !search.ok && search.status === 401) {
-    tone = 'warn';
-    title = '네이버 콘솔 권한 문제 — 애플리케이션에 사용 API가 하나도 없습니다';
-    body = '검색 API도 같은 401로 막혔습니다. 키 값 자체는 네이버에 전달되고 있으나 이 애플리케이션에 허용된 API가 없습니다. 개발자센터 [API 설정]에서 사용 API를 저장하세요.';
-  } else if (search && !search.ok) {
-    tone = 'bad';
-    title = '키 값이 잘못됐을 가능성';
-    body = `검색 API가 401이 아닌 ${search.status ?? '오류'}로 실패했습니다. Client ID/Secret을 다시 확인하세요.`;
+    title = '검색광고 + 데이터랩 검색어트렌드 연결 정상';
+    body = '검색량·경쟁도(35점)와 추세·연령 비중(30점)까지 자동 수집할 수 있습니다. 쇼핑 관심도는 신규 발급이 막혀 수동 입력으로 채웁니다.';
   } else {
-    return null;
+    tone = 'warn';
+    title = '검색광고만 연결됨 — 데이터랩 검색어트렌드는 실패';
+    body = '검색량과 경쟁도(35점)는 자동으로 채워집니다. 데이터랩은 신규 발급이 막혀 있으니, 데이터랩이 이미 등록된 기존 애플리케이션의 Client ID/Secret 으로 교체해 보세요.';
   }
 
   const palette = {
