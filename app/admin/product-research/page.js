@@ -813,6 +813,65 @@ function SummaryCard({ label, value, unit, text, sub, color = T.text }) {
   );
 }
 
+/**
+ * 진단 결과 판정 — "우리 설정 문제"인지 "네이버 콘솔 권한 문제"인지 구분한다.
+ * 같은 Client ID/Secret 으로 검색 API 가 되는지 여부가 판별 기준이다.
+ */
+function Verdict({ checks, fingerprints }) {
+  const by = Object.fromEntries((checks || []).map((c) => [c.id, c]));
+  const search = by.openapi_search;
+  const datalab = [by.datalab_search, by.datalab_shopping].filter(Boolean);
+  const datalabOk = datalab.length > 0 && datalab.every((c) => c.ok);
+  const whitespace = (fingerprints || []).filter((f) => f.hasWhitespace);
+
+  let tone = 'info';
+  let title = '';
+  let body = '';
+
+  if (whitespace.length) {
+    tone = 'bad';
+    title = '우리 쪽 설정 문제 — 환경변수 값에 공백이 섞였습니다';
+    body = `${whitespace.map((f) => f.name).join(', ')} 값 앞뒤에 공백이나 줄바꿈이 있습니다. Vercel에서 값을 지우고 다시 붙여넣은 뒤 재배포하세요.`;
+  } else if (datalabOk) {
+    tone = 'good';
+    title = '데이터랩 연결됨';
+    body = '쇼핑 관심도와 추세 자동 수집을 붙일 수 있습니다.';
+  } else if (search?.ok) {
+    tone = 'warn';
+    title = '네이버 콘솔 권한 문제 — 데이터랩 스코프만 없습니다';
+    body = '같은 Client ID/Secret으로 검색 API는 통과했습니다. 키 값과 환경변수 설정은 정상이라는 뜻입니다. 네이버 개발자센터에서 이 애플리케이션에 "데이터랩" 사용 API를 추가해야 합니다.';
+  } else if (search && !search.ok && search.status === 401) {
+    tone = 'warn';
+    title = '네이버 콘솔 권한 문제 — 애플리케이션에 사용 API가 하나도 없습니다';
+    body = '검색 API도 같은 401로 막혔습니다. 키 값 자체는 네이버에 전달되고 있으나 이 애플리케이션에 허용된 API가 없습니다. 개발자센터 [API 설정]에서 사용 API를 저장하세요.';
+  } else if (search && !search.ok) {
+    tone = 'bad';
+    title = '키 값이 잘못됐을 가능성';
+    body = `검색 API가 401이 아닌 ${search.status ?? '오류'}로 실패했습니다. Client ID/Secret을 다시 확인하세요.`;
+  } else {
+    return null;
+  }
+
+  const palette = {
+    good: { bg: '#f0fdf4', border: '#a7f3d0', fg: '#065f46', icon: '✓' },
+    warn: { bg: '#fffbeb', border: '#fde68a', fg: T.warnFg, icon: '!' },
+    bad: { bg: '#fef2f2', border: '#fecaca', fg: '#b91c1c', icon: '✕' },
+    info: { bg: '#f8fafc', border: T.border, fg: T.sub, icon: 'ℹ' },
+  }[tone];
+
+  return (
+    <div style={{
+      background: palette.bg, border: `1px solid ${palette.border}`,
+      borderRadius: 10, padding: '10px 12px', marginBottom: 10,
+    }}>
+      <div style={{ fontSize: 12.5, fontWeight: 800, color: palette.fg, marginBottom: 3 }}>
+        {palette.icon} 판정: {title}
+      </div>
+      <div style={{ fontSize: 11.5, color: palette.fg, lineHeight: 1.7 }}>{body}</div>
+    </div>
+  );
+}
+
 /** 외부 API 키 진단 결과 — 값이 아니라 통과 여부만 보여준다 */
 function DiagnosisResult({ data }) {
   return (
@@ -821,13 +880,33 @@ function DiagnosisResult({ data }) {
         진단 결과 <span style={{ fontWeight: 500, color: T.muted }}>· 테스트 키워드 &quot;{data.testedKeyword}&quot;</span>
       </div>
 
-      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 10 }}>
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
         {Object.entries(data.env).map(([key, present]) => (
           <Badge key={key} bg={present ? '#d1fae5' : '#fee2e2'} fg={present ? '#065f46' : '#b91c1c'} icon={present ? '✓' : '✕'}>
             {key}
           </Badge>
         ))}
       </div>
+
+      {/* 키 지문 — 값은 감추고 공백·길이 이상만 확인 */}
+      {data.fingerprints?.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+          {data.fingerprints.map((f) => (
+            <span key={f.name} style={{
+              fontSize: 10.5, color: f.hasWhitespace ? '#b91c1c' : T.muted,
+              border: `1px solid ${f.hasWhitespace ? '#fecaca' : T.border}`,
+              background: f.hasWhitespace ? '#fef2f2' : '#fff',
+              borderRadius: 6, padding: '2px 7px',
+            }}>
+              {f.name.replace('NAVER_OPENAPI_', '')} · {f.present ? `${f.length}자` : '없음'}
+              {f.prefix && ` · ${f.prefix}`}
+              {f.hasWhitespace && ' · ⚠ 앞뒤 공백 있음'}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <Verdict checks={data.checks} fingerprints={data.fingerprints} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {data.checks.map((c) => (

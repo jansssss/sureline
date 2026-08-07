@@ -25,13 +25,65 @@ export async function GET(request) {
     NAVER_OPENAPI_CLIENT_SECRET: Boolean(process.env.NAVER_OPENAPI_CLIENT_SECRET),
   };
 
+  // 값 자체는 노출하지 않고, 오타·공백 여부만 판별할 수 있는 지문을 만든다
+  const fingerprints = [
+    fingerprint('NAVER_OPENAPI_CLIENT_ID', process.env.NAVER_OPENAPI_CLIENT_ID, { showPrefix: true }),
+    fingerprint('NAVER_OPENAPI_CLIENT_SECRET', process.env.NAVER_OPENAPI_CLIENT_SECRET),
+  ];
+
   const checks = await Promise.all([
     checkSearchAd(),
+    checkOpenApiSearch(),
     checkDatalabSearch(),
     checkDatalabShopping(),
   ]);
 
-  return NextResponse.json({ env, checks, testedKeyword: TEST_KEYWORD });
+  return NextResponse.json({ env, fingerprints, checks, testedKeyword: TEST_KEYWORD });
+}
+
+/** 키 값을 드러내지 않고 형태만 알려준다 — 앞뒤 공백이나 길이 이상을 잡기 위함 */
+function fingerprint(name, value, { showPrefix = false } = {}) {
+  if (!value) return { name, present: false };
+  const trimmed = value.trim();
+  return {
+    name,
+    present: true,
+    length: value.length,
+    hasWhitespace: trimmed.length !== value.length,
+    prefix: showPrefix ? `${trimmed.slice(0, 4)}…` : null,
+  };
+}
+
+// ─── 네이버 오픈 API — 검색 (스코프 확인용) ─────────────────────────────────
+// 데이터랩과 같은 Client ID/Secret 을 쓴다.
+// 이것까지 막히면 애플리케이션에 스코프가 하나도 없다는 뜻이다.
+
+async function checkOpenApiSearch() {
+  const base = { id: 'openapi_search', name: '네이버 검색 API (스코프 확인용)' };
+  const id = process.env.NAVER_OPENAPI_CLIENT_ID;
+  const secret = process.env.NAVER_OPENAPI_CLIENT_SECRET;
+
+  if (!id || !secret) {
+    return { ...base, ok: false, skipped: true, message: '오픈 API 환경변수가 없습니다.' };
+  }
+
+  try {
+    const res = await fetch(
+      `https://openapi.naver.com/v1/search/blog.json?query=${encodeURIComponent(TEST_KEYWORD)}&display=1`,
+      {
+        headers: { 'X-Naver-Client-Id': id, 'X-Naver-Client-Secret': secret },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      }
+    );
+    const text = await res.text();
+    if (!res.ok) {
+      return { ...base, ok: false, status: res.status, message: hint401(res.status), body: truncate(text) };
+    }
+    return { ...base, ok: true, status: res.status, message: '정상 — 이 Client ID/Secret 자체는 유효합니다.' };
+  } catch (e) {
+    return { ...base, ok: false, message: `요청 실패: ${e.message}` };
+  }
 }
 
 // ─── 네이버 검색광고 (키워드 도구) ───────────────────────────────────────────
