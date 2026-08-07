@@ -6,7 +6,7 @@
  */
 import { useMemo } from 'react';
 import { Modal, Button, Badge, Empty, T } from './ui';
-import { COMPETITION_LEVELS, LEVEL_3 } from '@/lib/product-research/constants.js';
+import { COMPETITION_LEVELS } from '@/lib/product-research/constants.js';
 import { hasValue } from '@/lib/product-research/calc.js';
 import { fmtNumber, fmtPercent, fmtMoney } from '@/lib/product-research/format.js';
 
@@ -23,11 +23,6 @@ const ROWS = [
     display: (c) => (mobileRatio(c) === null ? null : `${mobileRatio(c).toFixed(1)}%`),
   },
   {
-    label: '25~54세 비중',
-    get: (c) => c.age_25_54_ratio,
-    display: (c) => (hasValue(c.age_25_54_ratio) ? `${Number(c.age_25_54_ratio)}%` : null),
-  },
-  {
     label: '최근 3개월 상승률',
     get: (c) => c.search_trend_3_month,
     display: (c) => fmtPercent(c.search_trend_3_month),
@@ -36,11 +31,6 @@ const ROWS = [
     label: '쇼핑 클릭 관심도',
     get: (c) => c.shopping_click_index,
     display: (c) => fmtNumber(c.shopping_click_index),
-  },
-  {
-    label: '30일 환산 후기 증가량',
-    get: (c) => c.normalized_30_day_review_increase,
-    display: (c) => fmtNumber(c.normalized_30_day_review_increase, '개'),
   },
   {
     label: '검색 경쟁도',
@@ -58,32 +48,9 @@ const ROWS = [
     display: (c) => fmtMoney(c.price),
   },
   {
-    label: '건당 예상 수익',
-    get: (c) => c.estimated_commission_amount,
-    display: (c) => fmtMoney(c.estimated_commission_amount),
-  },
-  {
-    label: '반품 위험도',
-    lowerIsBetter: true,
-    get: (c) => {
-      const i = LEVEL_3.indexOf(String(c.return_risk)); // 높음(0) < 보통(1) < 낮음(2)
-      return i === -1 ? null : LEVEL_3.length - 1 - i;  // 낮음이 0이 되도록 뒤집음
-    },
-    display: (c) => c.return_risk,
-    note: '낮을수록 유리',
-  },
-  {
     label: '로켓배송',
     get: (c) => (c.rocket_delivery === null || c.rocket_delivery === undefined ? null : (c.rocket_delivery ? 1 : 0)),
     display: (c) => (c.rocket_delivery === null || c.rocket_delivery === undefined ? null : (c.rocket_delivery ? '적용' : '미적용')),
-  },
-  {
-    label: 'sureline 적합성',
-    get: (c) => {
-      const i = LEVEL_3.indexOf(String(c.sureline_relevance));
-      return i === -1 ? null : LEVEL_3.length - 1 - i; // 높음이 큰 값
-    },
-    display: (c) => c.sureline_relevance,
   },
   {
     label: '종합점수',

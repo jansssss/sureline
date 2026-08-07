@@ -29,16 +29,17 @@ import {
   computeTrends, trendRange,
 } from '../lib/product-research/naver.js';
 
-// ─── 기본 평가기준을 seed 마이그레이션에서 그대로 읽어온다 ───────────────────
+// ─── 평가기준을 마이그레이션 SQL 에서 그대로 읽어온다 ────────────────────────
+// 코드가 아니라 DB 가 기준값의 원본이므로, 테스트도 SQL 을 원본으로 삼는다.
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SEED_SQL = readFileSync(resolve(__dirname, '../supabase/migrations/004_product_research_seed.sql'), 'utf8');
+const migration = (name) => readFileSync(resolve(__dirname, `../supabase/migrations/${name}`), 'utf8');
 
-/** seed SQL 안의 '{...}'::jsonb 블록과 앞의 (key, name, weight, order) 를 파싱 */
-function loadDefaultSettings() {
+/** '(key, name, weight, order, {...}::jsonb)' 튜플을 파싱 */
+function parseSettings(sql) {
   const re = /\(\s*'([a-z_]+)',\s*'([^']+)',\s*(\d+),\s*(\d+),\s*'(\{[\s\S]*?\})'::jsonb\s*\)/g;
   const out = [];
   let m;
-  while ((m = re.exec(SEED_SQL)) !== null) {
+  while ((m = re.exec(sql)) !== null) {
     out.push({
       criterion_key: m[1],
       criterion_name: m[2],
@@ -51,11 +52,38 @@ function loadDefaultSettings() {
   return out;
 }
 
-const SETTINGS = loadDefaultSettings();
+/** 004 = 전체 카탈로그(비활성 항목 포함). 점수 엔진의 규칙 타입 커버리지용 */
+const ALL_SETTINGS = parseSettings(migration('004_product_research_seed.sql'));
 
-test('seed 마이그레이션에서 7개 평가기준을 읽고 총 배점이 100점이다', () => {
-  assert.equal(SETTINGS.length, 7);
+/** 005 = 실제 운영 중인 활성 기준. 자동 수집 가능한 항목만 남겼다 */
+const SETTINGS = parseSettings(migration('005_product_research_auto_only.sql'));
+
+const DEACTIVATED = ['age_fit', 'coupang_signal', 'profitability'];
+
+test('활성 평가기준은 4개이고 배점 합계가 100점이다', () => {
+  assert.equal(SETTINGS.length, 4);
   assert.equal(SETTINGS.reduce((a, s) => a + s.weight, 0), 100);
+});
+
+test('자동 수집이 불가능한 항목은 활성 기준에서 빠져 있다', () => {
+  const activeKeys = SETTINGS.map((s) => s.criterion_key);
+  for (const key of DEACTIVATED) {
+    assert.equal(activeKeys.includes(key), false, `${key} 는 비활성이어야 한다`);
+  }
+  assert.deepEqual(activeKeys, ['search_volume', 'trend', 'competition', 'shopping_interest']);
+});
+
+test('비활성 항목도 카탈로그(004)에는 남아 있어 언제든 되살릴 수 있다', () => {
+  const catalogKeys = ALL_SETTINGS.map((s) => s.criterion_key);
+  for (const key of DEACTIVATED) assert.ok(catalogKeys.includes(key));
+  assert.equal(ALL_SETTINGS.length, 7);
+});
+
+test('is_active=false 인 항목은 점수 계산에서 아예 제외된다', () => {
+  const withInactive = ALL_SETTINGS.map((s) => ({ ...s, is_active: !DEACTIVATED.includes(s.criterion_key) }));
+  const result = calculateScore({ total_monthly_search: 50000 }, withInactive);
+  assert.equal(result.breakdown.length, 4);
+  assert.equal(result.maxTotal, 65); // 004 배점 기준 활성 4개 합
 });
 
 // ─── null / 0 구분 ───────────────────────────────────────────────────────────
@@ -170,47 +198,63 @@ test('예상 수익 — 예상 상품가격이 있으면 그것을 우선 사용
 
 // ─── 항목별 점수 ─────────────────────────────────────────────────────────────
 
+/** 현재 운영 기준(005)으로 채점 */
 function scoreOf(candidate) {
   const r = calculateScore(applyDerivedFields(candidate), SETTINGS);
   const by = Object.fromEntries(r.breakdown.map((b) => [b.key, b]));
   return { result: r, by };
 }
 
-test('월간 검색수 구간별 점수', () => {
-  const cases = [[500, 3], [1500, 8], [5000, 15], [15000, 21], [50000, 25]];
+/** 전체 카탈로그(004)로 채점 — 비활성 항목의 규칙 타입까지 검증하기 위함 */
+function scoreOfCatalog(candidate) {
+  const r = calculateScore(applyDerivedFields(candidate), ALL_SETTINGS);
+  const by = Object.fromEntries(r.breakdown.map((b) => [b.key, b]));
+  return { result: r, by };
+}
+
+test('월간 검색수 구간별 점수 (45점 기준)', () => {
+  const cases = [[500, 5], [1500, 14], [5000, 27], [15000, 38], [50000, 45]];
   for (const [value, expected] of cases) {
     const { by } = scoreOf({ total_monthly_search: value });
     assert.equal(by.search_volume.score, expected, `${value}회 → ${expected}점`);
   }
 });
 
-test('최근 관심도 상승률 구간별 점수', () => {
-  const cases = [[-35, 0], [-8, 4], [0, 7], [5, 10], [20, 13], [45, 15]];
+test('최근 관심도 상승률 구간별 점수 (25점 기준)', () => {
+  const cases = [[-35, 0], [-8, 7], [0, 12], [5, 17], [20, 22], [45, 25]];
   for (const [value, expected] of cases) {
     const { by } = scoreOf({ search_trend_3_month: value });
     assert.equal(by.trend.score, expected, `${value}% → ${expected}점`);
   }
 });
 
-test('25~54세 적합도 구간별 점수', () => {
-  const cases = [[30, 3], [50, 7], [60, 10], [70, 13], [82, 15]];
-  for (const [value, expected] of cases) {
-    const { by } = scoreOf({ age_25_54_ratio: value });
-    assert.equal(by.age_fit.score, expected);
-  }
-});
-
-test('경쟁도는 낮을수록 높은 점수를 받는다', () => {
+test('경쟁도는 낮을수록 높은 점수를 받는다 (20점 기준)', () => {
   const levels = ['매우 낮음', '낮음', '중간', '높음', '매우 높음'];
   const scores = levels.map((lv) => scoreOf({ search_competition: lv }).by.competition.score);
-  assert.deepEqual(scores, [10, 8, 6, 3, 0]);
+  assert.deepEqual(scores, [20, 16, 12, 6, 0]);
   for (let i = 1; i < scores.length; i += 1) {
     assert.ok(scores[i] < scores[i - 1], '경쟁도가 높아질수록 점수가 낮아져야 한다');
   }
 });
 
-test('쿠팡 판매 신호는 후기 증가·평점·로켓배송·베스트 노출을 합산한다', () => {
-  const { by } = scoreOf({
+test('쇼핑 관심도는 클릭지수와 증감률을 합산한다 (10점 기준)', () => {
+  const { by } = scoreOf({ shopping_click_index: 85, shopping_trend_3_month: 15 });
+  assert.equal(by.shopping_interest.score, 10);
+  assert.equal(by.shopping_interest.max, 10);
+});
+
+// ─── 비활성 항목 — 되살렸을 때 정상 동작하는지 (엔진 규칙 타입 커버리지) ────
+
+test('[카탈로그] 25~54세 적합도 구간별 점수', () => {
+  const cases = [[30, 3], [50, 7], [60, 10], [70, 13], [82, 15]];
+  for (const [value, expected] of cases) {
+    const { by } = scoreOfCatalog({ age_25_54_ratio: value });
+    assert.equal(by.age_fit.score, expected);
+  }
+});
+
+test('[카탈로그] 쿠팡 판매 신호는 후기 증가·평점·로켓배송·베스트 노출을 합산한다', () => {
+  const { by } = scoreOfCatalog({
     current_review_count: 4200,
     previous_review_count: 4000,   // 30일 환산 200개 → 9점
     measurement_start_date: '2026-07-06',
@@ -223,14 +267,14 @@ test('쿠팡 판매 신호는 후기 증가·평점·로켓배송·베스트 노
   assert.equal(by.coupang_signal.max, 15);
 });
 
-test('쿠팡 판매 신호 — 세부 항목이 모두 미입력이면 미입력으로 표시된다', () => {
-  const { by } = scoreOf({ product_name: 'x' });
+test('[카탈로그] 쿠팡 판매 신호 — 세부 항목이 모두 미입력이면 미입력으로 표시된다', () => {
+  const { by } = scoreOfCatalog({ product_name: 'x' });
   assert.equal(by.coupang_signal.score, 0);
   assert.equal(by.coupang_signal.missing, true);
 });
 
-test('수익성·안정성 세부 배점 합계는 5점을 넘지 않는다', () => {
-  const { by } = scoreOf({
+test('[카탈로그] 수익성·안정성 세부 배점 합계는 5점을 넘지 않는다', () => {
+  const { by } = scoreOfCatalog({
     price: 39000, estimated_commission_rate: 10,  // 3,900원
     seller_stability: '높음', return_risk: '낮음',
     product_page_stability: '높음', direct_review_possible: true,
@@ -249,12 +293,12 @@ test('null 은 0점 처리하되 실제 0 입력과 구별해서 missing 으로 
   assert.match(nullCase.reason, /미입력/);
 
   const zeroCase = scoreOf({ total_monthly_search: 0 }).by.search_volume;
-  assert.equal(zeroCase.score, 3);       // 실제 0 은 '1,000회 미만' 구간
+  assert.equal(zeroCase.score, 5);       // 실제 0 은 '1,000회 미만' 구간
   assert.equal(zeroCase.missing, false);
 });
 
-test('추세 0%(보합)은 미입력과 다르게 7점을 받는다', () => {
-  assert.equal(scoreOf({ search_trend_3_month: 0 }).by.trend.score, 7);
+test('추세 0%(보합)은 미입력과 다르게 12점을 받는다', () => {
+  assert.equal(scoreOf({ search_trend_3_month: 0 }).by.trend.score, 12);
   assert.equal(scoreOf({ search_trend_3_month: null }).by.trend.score, 0);
   assert.equal(scoreOf({ search_trend_3_month: null }).by.trend.missing, true);
 });
@@ -263,41 +307,40 @@ test('추세 0%(보합)은 미입력과 다르게 7점을 받는다', () => {
 
 test('총점 = 항목별 점수의 합이고 100점을 넘지 않는다', () => {
   const { result } = scoreOf({
-    total_monthly_search: 15000,      // 21
-    search_trend_3_month: 20,         // 13
-    age_25_54_ratio: 82,              // 15
-    shopping_click_index: 45,         // 6
-    shopping_trend_3_month: 12,       // 5  → 쇼핑 11
-    current_review_count: 4200,
-    previous_review_count: 4100,
-    measurement_start_date: '2026-07-06',
-    measurement_end_date: '2026-08-05',   // 30일, 100개 → 9
-    rating: 4.6,                      // 2
-    rocket_delivery: true,            // 2
-    recommendation_badge: false,
-    category_best: false,             // 0 → 쿠팡 13
-    search_competition: '낮음',        // 8
-    price: 39000,
-    estimated_commission_rate: 10,
-    seller_stability: '높음',
-    return_risk: '낮음',
-    product_page_stability: '높음',
-    direct_review_possible: true,
-    sureline_relevance: '높음',        // 5
+    total_monthly_search: 15000,      // 38
+    search_trend_3_month: 20,         // 22
+    search_competition: '낮음',        // 16
+    shopping_click_index: 45,         // 4
+    shopping_trend_3_month: 12,       // 3  → 쇼핑 7
+    // 아래 값들은 비활성 항목이라 점수에 반영되지 않는다
+    age_25_54_ratio: 82,
+    rating: 4.6,
+    rocket_delivery: true,
   });
 
   const sum = result.breakdown.reduce((a, b) => a + b.score, 0);
   assert.equal(result.total, Math.round(sum * 100) / 100);
-  assert.equal(result.total, 21 + 13 + 15 + 11 + 13 + 8 + 5);
+  assert.equal(result.total, 38 + 22 + 16 + 7);
   assert.ok(result.total <= 100);
   assert.equal(result.maxTotal, 100);
   assert.equal(result.missingCount, 0);
 });
 
-test('완전 미입력 후보의 총점은 0이고 모든 항목이 missing 이다', () => {
+test('자동 수집만으로 얻을 수 있는 최대 점수는 90점이다 (쇼핑 10점은 미연결)', () => {
+  const { result } = scoreOf({
+    total_monthly_search: 50000,      // 45
+    search_trend_3_month: 45,         // 25
+    search_competition: '매우 낮음',   // 20
+  });
+  assert.equal(result.total, 90);
+  assert.equal(result.missingCount, 1);          // 쇼핑 관심도만 미입력
+  assert.equal(result.evaluatedMax, 90);
+});
+
+test('완전 미입력 후보의 총점은 0이고 활성 항목 전부가 missing 이다', () => {
   const { result } = scoreOf({ product_name: '버티컬 마우스', primary_keyword: '버티컬 마우스' });
   assert.equal(result.total, 0);
-  assert.equal(result.missingCount, 7);
+  assert.equal(result.missingCount, 4);
   assert.equal(result.evaluatedMax, 0);
 });
 
@@ -312,10 +355,10 @@ test('scoreAndRank 는 점수 내림차순으로 순위를 매긴다', () => {
 });
 
 test('배점을 바꾸면 점수도 따라 바뀐다 (기준이 DB에 있다는 전제)', () => {
-  const halved = SETTINGS.map((s) => (s.criterion_key === 'search_volume' ? { ...s, weight: 10 } : s));
+  const lowered = SETTINGS.map((s) => (s.criterion_key === 'search_volume' ? { ...s, weight: 10 } : s));
   const base = calculateScore({ total_monthly_search: 50000 }, SETTINGS);
-  const changed = calculateScore({ total_monthly_search: 50000 }, halved);
-  assert.equal(base.breakdown.find((b) => b.key === 'search_volume').score, 25);
+  const changed = calculateScore({ total_monthly_search: 50000 }, lowered);
+  assert.equal(base.breakdown.find((b) => b.key === 'search_volume').score, 45);
   assert.equal(changed.breakdown.find((b) => b.key === 'search_volume').score, 10); // weight 로 clamp
 });
 

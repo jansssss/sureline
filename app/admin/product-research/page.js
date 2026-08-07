@@ -30,10 +30,8 @@ const SORT_COLUMNS = [
   { key: 'primary_keyword',        label: '대표 키워드', width: 130, numeric: false },
   { key: 'category',               label: '카테고리',    width: 110, numeric: false },
   { key: 'total_monthly_search',   label: '월간 검색량', width: 100, numeric: true },
-  { key: 'age_25_54_ratio',        label: '25~54세',     width: 78,  numeric: true },
   { key: 'search_trend_3_month',   label: '3개월 추세',  width: 88,  numeric: true },
   { key: 'shopping_click_index',   label: '쇼핑 관심도', width: 88,  numeric: true },
-  { key: 'normalized_30_day_review_increase', label: '후기 증가(30일)', width: 108, numeric: true },
   { key: 'search_competition',     label: '경쟁도',      width: 82,  numeric: true },
   { key: 'price',                  label: '판매가격',    width: 96,  numeric: true },
   { key: 'total_score',            label: '종합점수',    width: 96,  numeric: true },
@@ -611,15 +609,9 @@ export default function ProductResearchPage() {
                       <td className="pr-optional-col" style={tdStyle}><Val>{c.category}</Val></td>
                       <td className="pr-optional-col" style={tdNum}><Val>{fmtNumber(c.total_monthly_search)}</Val></td>
                       <td className="pr-optional-col" style={tdNum}>
-                        <Val>{hasValue(c.age_25_54_ratio) ? `${Number(c.age_25_54_ratio)}%` : null}</Val>
-                      </td>
-                      <td className="pr-optional-col" style={tdNum}>
                         <Trend value={c.search_trend_3_month} />
                       </td>
                       <td className="pr-optional-col" style={tdNum}><Val>{fmtNumber(c.shopping_click_index)}</Val></td>
-                      <td className="pr-optional-col" style={tdNum}>
-                        <Val>{fmtNumber(c.normalized_30_day_review_increase)}</Val>
-                      </td>
                       <td className="pr-optional-col" style={tdStyle}><Val>{c.search_competition}</Val></td>
                       <td className="pr-optional-col" style={tdNum}><Val>{fmtMoney(c.price)}</Val></td>
 
