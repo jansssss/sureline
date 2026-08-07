@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import {
   isConfigured, verifyAdmin, getCandidate, updateCandidate, saveSnapshot, addSource,
 } from '@/lib/product-research/service.js';
-import { NaverKeywordProvider, NotConnectedError } from '@/lib/product-research/providers.js';
+import {
+  NaverKeywordProvider, NaverSearchTrendProvider, NotConnectedError,
+} from '@/lib/product-research/providers.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +26,16 @@ export async function POST(request, { params }) {
     const metrics = NaverKeywordProvider.normalizeMetrics(raw);
     const today = new Date().toISOString().slice(0, 10);
 
+    // 추세는 별도 API 다. 실패해도 검색광고 결과 저장을 막지 않는다.
+    let trend = null;
+    let trendError = null;
+    try {
+      const trendRaw = await NaverSearchTrendProvider.fetchKeywordMetrics(existing.primary_keyword);
+      trend = { ...NaverSearchTrendProvider.normalizeMetrics(trendRaw), months: trendRaw.months };
+    } catch (e) {
+      trendError = e instanceof NotConnectedError ? '데이터랩 미연결' : e.message;
+    }
+
     // 자동 수집 대상 컬럼만 덮어쓴다. 관리자가 손으로 넣은 다른 값은 건드리지 않는다.
     const patch = {
       pc_monthly_search: metrics.pc_monthly_search,
@@ -37,6 +49,14 @@ export async function POST(request, { params }) {
       last_checked_at: today,
     };
     if (existing.status === '조사 전') patch.status = '조사 중';
+
+    // 추세는 상대지수 기반이라 값이 있을 때만 덮어쓴다
+    if (trend?.search_trend_3_month !== null && trend?.search_trend_3_month !== undefined) {
+      patch.search_trend_3_month = trend.search_trend_3_month;
+    }
+    if (trend?.search_trend_12_month !== null && trend?.search_trend_12_month !== undefined) {
+      patch.search_trend_12_month = trend.search_trend_12_month;
+    }
 
     const candidate = await updateCandidate(params.id, patch, actor);
 
@@ -57,14 +77,27 @@ export async function POST(request, { params }) {
         : `자동 수집 (연관 키워드 ${raw.relatedCount}개 중 정확 일치 행 사용)`,
     }, actor);
 
+    if (trend) {
+      await addSource(params.id, {
+        data_type: 'search',
+        source_name: '네이버 데이터랩 검색어트렌드',
+        source_kind: '플랫폼 제공 지수',
+        source_url: 'https://datalab.naver.com',
+        checked_at: today,
+        memo: `검색어트렌드 상대지수 ${trend.months}개월 기준 증감률 자동 계산. 절대 검색량이 아님.`,
+      }, actor);
+    }
+
     return NextResponse.json({
       candidate,
       censored: raw.censored,
+      trendError,
       applied: {
         pc_monthly_search: patch.pc_monthly_search,
         mobile_monthly_search: patch.mobile_monthly_search,
         total_monthly_search: candidate.total_monthly_search,
         search_competition: patch.search_competition,
+        search_trend_3_month: patch.search_trend_3_month ?? null,
       },
     });
   } catch (e) {

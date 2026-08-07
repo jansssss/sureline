@@ -26,6 +26,7 @@ import {
 } from '../lib/product-research/providers.js';
 import {
   mapKeywordToolRow, parseSearchCount, weightedCtr, findExactRow, hasCensoredCount,
+  computeTrends, trendRange,
 } from '../lib/product-research/naver.js';
 
 // ─── 기본 평가기준을 seed 마이그레이션에서 그대로 읽어온다 ───────────────────
@@ -525,6 +526,45 @@ test('연관 키워드 목록에서 공백을 무시하고 정확히 일치하�
 test('10 미만 검열 값이 섞였는지 감지한다 (출처 메모에 남기기 위함)', () => {
   assert.equal(hasCensoredCount({ monthlyPcQcCnt: '< 10', monthlyMobileQcCnt: 120 }), true);
   assert.equal(hasCensoredCount({ monthlyPcQcCnt: 800, monthlyMobileQcCnt: 120 }), false);
+});
+
+// ─── 데이터랩 검색어트렌드 ───────────────────────────────────────────────────
+
+const monthly = (ratios) =>
+  ratios.map((ratio, i) => ({ period: `2025-${String(i + 1).padStart(2, '0')}-01`, ratio }));
+
+test('3개월 추세 = 최근 3개월 평균 대비 직전 3개월 평균', () => {
+  // 직전 3개월 평균 10, 최근 3개월 평균 15 → +50%
+  const { search_trend_3_month } = computeTrends(monthly([10, 10, 10, 15, 15, 15]));
+  assert.equal(search_trend_3_month, 50);
+});
+
+test('12개월 추세는 12개 구간이 있을 때만 계산한다', () => {
+  const short = computeTrends(monthly([10, 10, 10, 12, 12, 12]));
+  assert.equal(short.search_trend_12_month, null);
+
+  const full = computeTrends(monthly([
+    20, 20, 20, 25, 25, 25, 30, 30, 30, 40, 40, 40,
+  ]));
+  assert.equal(full.search_trend_12_month, 100);   // 20 → 40
+  assert.equal(full.search_trend_3_month, Math.round(((40 / 30) - 1) * 1000) / 10);
+});
+
+test('추세 — 구간이 모자라거나 기준이 0이면 0%가 아니라 null', () => {
+  assert.equal(computeTrends(monthly([10, 12])).search_trend_3_month, null);
+  assert.equal(computeTrends(monthly([0, 0, 0, 5, 5, 5])).search_trend_3_month, null);
+  assert.equal(computeTrends([]).search_trend_3_month, null);
+});
+
+test('추세 — 하락도 그대로 음수로 잡는다', () => {
+  const { search_trend_3_month } = computeTrends(monthly([100, 100, 100, 75, 75, 75]));
+  assert.equal(search_trend_3_month, -25);
+});
+
+test('추세 조회 구간은 이번 달을 빼고 완결된 12개월을 잡는다', () => {
+  const { startDate, endDate } = trendRange(new Date('2026-08-06T00:00:00Z'));
+  assert.equal(endDate, '2026-07-31');   // 지난달 말일
+  assert.equal(startDate, '2025-08-01'); // 12개월 전 1일
 });
 
 test('자동수집 대상은 네이버 검색·쇼핑뿐 — 쿠팡 프로바이더는 없다', () => {
